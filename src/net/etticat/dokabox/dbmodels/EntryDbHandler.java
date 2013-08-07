@@ -186,6 +186,17 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 //		updateContact(contact);
 //	}
 
+	public void replaceEntries(List<FileSystemEntry> entries, Integer id) {
+		
+		SQLiteDatabase db= this.getWritableDatabase();
+		db.delete(TABLE_ENTRIES, KEY_PARENT_ID + "=?", new String[] { ""+id});
+		
+		for (FileSystemEntry entry : entries) {
+			replaceEntry(entry);
+		}
+		
+	}
+
 //
 //	public List<Integer> getAllContactIds() {
 //		List<Integer> result = new ArrayList<Integer>();

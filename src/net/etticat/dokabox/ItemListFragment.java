@@ -268,10 +268,8 @@ public class ItemListFragment extends ListFragment {
 			if (success) {
 				refreshListView(entries);
 				
-				//TODO DELETE 
-				for (FileSystemEntry entry: entries) {
-					entryDbHandler.replaceEntry(entry);
-				}
+				entryDbHandler.replaceEntries(entries, id);
+				
 				
 			} else {
 				

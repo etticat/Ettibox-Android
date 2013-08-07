@@ -43,7 +43,7 @@ public class ItemListActivity extends FragmentActivity implements
 		sharedPrefs = new SharedPrefs(this);
 		
 		itemListFragment = new ItemListFragment();		
-		getSupportFragmentManager().beginTransaction().addToBackStack(null)
+		getSupportFragmentManager().beginTransaction()
 				.replace(R.id.fragment_container, itemListFragment).commit();
 		
 		if(sharedPrefs.getUsername() == ""){
