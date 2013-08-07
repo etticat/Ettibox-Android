@@ -6,6 +6,8 @@ import net.etticat.dokabox.models.SharedPrefs;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 
 /**
  * An activity representing a list of Items. This activity has different
@@ -40,13 +42,14 @@ public class ItemListActivity extends FragmentActivity implements
 		
 		sharedPrefs = new SharedPrefs(this);
 		
+		itemListFragment = new ItemListFragment();		
+		getSupportFragmentManager().beginTransaction().addToBackStack(null)
+				.replace(R.id.fragment_container, itemListFragment).commit();
 		
 		if(sharedPrefs.getUsername() == ""){
 			Intent intent = new Intent(this, LoginActivity.class);
 			startActivity(intent);
 		}
-		itemListFragment = ((ItemListFragment) getSupportFragmentManager().findFragmentById(
-				R.id.item_list));
 
 		String stringId = getIntent().getStringExtra(ItemDetailFragment.ARG_ITEM_ID);
 		if(stringId != null)
@@ -61,8 +64,7 @@ public class ItemListActivity extends FragmentActivity implements
 
 			// In two-pane mode, list items should be given the
 			// 'activated' state when touched.
-			((ItemListFragment) getSupportFragmentManager().findFragmentById(
-					R.id.item_list)).setActivateOnItemClick(true);
+			itemListFragment.setActivateOnItemClick(true);
 		}
 
 		// TODO: If exposing deep links into your app, handle intents here.
@@ -75,13 +77,24 @@ public class ItemListActivity extends FragmentActivity implements
 	@Override
 	public void onItemSelected(FileSystemEntry item) {
 		if(item.getType() == FileSystemEntryType.FOLDER){
-			Intent newListIntent = new Intent(this, ItemListActivity.class);
-			newListIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, ""+item.getId());
-			startActivity(newListIntent);
+			
+
+			
+			
+			ItemListFragment subItemListFragment = new ItemListFragment();
+			subItemListFragment.setId(item.getId());
+			
+			FragmentManager fm = getSupportFragmentManager();
+			FragmentTransaction ft = fm.beginTransaction();
+			ft.replace(R.id.fragment_container, subItemListFragment);
+			ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+			ft.addToBackStack(""+item.getId());
+			ft.commit();
 			return;
 		}
 		
 		if (mTwoPane) {
+			
 			// In two-pane mode, show the detail view in this activity by
 			// adding or replacing the detail fragment using a
 			// fragment transaction.

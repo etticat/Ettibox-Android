@@ -14,20 +14,27 @@ import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 
+import android.content.Context;
+
 
 public class WebServiceConnection {
+	
+	private Context context;
+	private SharedPrefs sharedPrefs;
 	private static final String NAMESPACE = "http://tempuri.org/";
 	private static final String URL = "http://192.168.0.116/Dokabox-Proxy-Server/Dokabox.asmx";
 
 	private static final String METHOD_LOGIN = "LoginUser";
 	private static final String METHOD_DIRECTORYCONTENT = "DirectoryContent";
 	private static final String METHOD_ROOTDIRECTORIES = "RootDirectories";
+	private static final String METHOD_GETACCESSTOKEN = "GetAccessToken";
     
-	public WebServiceConnection() {
-		
+	public WebServiceConnection(Context context) {
+		this.context = context;
+		sharedPrefs = new SharedPrefs(context);
 	}
     
-	public UserData login(String user, String password, String uuid){
+	public UserData login(String user, String password){
 		UserData userData = new UserData();
 		String pushToken = "\\";
 		
@@ -48,7 +55,7 @@ public class WebServiceConnection {
 
         PropertyInfo pi3 = new PropertyInfo();
         pi3.setName("iPadId");
-        pi3.setValue(uuid);
+        pi3.setValue(sharedPrefs.getUuid());
         pi3.setType(String.class);
         Request.addProperty(pi3);
         
@@ -101,15 +108,22 @@ public class WebServiceConnection {
         {
             e.printStackTrace();
         }		
+        if(userData.getName() != null){
+			sharedPrefs.setUsername(userData.getName());
+			sharedPrefs.setAccessToken(userData.getAccessToken());
+			sharedPrefs.setEncryptedPassword(userData.getEncryptedPassword());	
+        }
 		return userData;
 		
 	}
-	public List<FileSystemEntry> getDirectoryContent(String uuid, String user, String accessToken, Integer id){
+	public List<FileSystemEntry> getDirectoryContent(Integer id, Boolean retry){
+		
 		
 		if(id == 0)
-			return getRootPaths(uuid, user, accessToken);
+			return getRootPaths(sharedPrefs.getUuid(), sharedPrefs.getUsername(), sharedPrefs.getAccessToken(), true);
 		
-		List<FileSystemEntry> result = new ArrayList<FileSystemEntry>();
+
+		List<FileSystemEntry> result = null;
 		
 		
 
@@ -119,19 +133,19 @@ public class WebServiceConnection {
 		
 		PropertyInfo pi = new PropertyInfo();
         pi.setName("iPadId");
-        pi.setValue(uuid);
+        pi.setValue(sharedPrefs.getUuid());
         pi.setType(String.class);
         Request.addProperty(pi);
 
         PropertyInfo pi2 = new PropertyInfo();
         pi2.setName("user");
-        pi2.setValue(user);
+        pi2.setValue(sharedPrefs.getUsername());
         pi2.setType(String.class);
         Request.addProperty(pi2);
 
         PropertyInfo pi3 = new PropertyInfo();
         pi3.setName("accessToken");
-        pi3.setValue(accessToken);
+        pi3.setValue(sharedPrefs.getAccessToken());
         pi3.setType(String.class);
         Request.addProperty(pi3);
 
@@ -165,6 +179,8 @@ public class WebServiceConnection {
             SoapObject files = (SoapObject) response.getProperty("SmbFiles");
             
             int totalCount = directories.getPropertyCount();
+            
+            result = new ArrayList<FileSystemEntry>();
             if (totalCount > 0 ) {
                 for (int detailCount = 0; detailCount < totalCount; detailCount++) {
                     SoapObject responseEntry = (SoapObject) directories.getProperty(detailCount);
@@ -231,17 +247,68 @@ public class WebServiceConnection {
         }
         catch(Exception e)
         {
-        	return null;
+        	
+        	getAccessToken();
+        	if(retry)
+        		result = getDirectoryContent(id, false);
         }
 		
 		return result;
 		
 	}
 
-	private List<FileSystemEntry> getRootPaths(String uuid, String user,
-			String accessToken) {
+	private void getAccessToken() {
+
 		
-		List<FileSystemEntry> result = new ArrayList<FileSystemEntry>();
+		
+		SoapObject Request = new SoapObject(NAMESPACE, METHOD_GETACCESSTOKEN);
+
+		
+		PropertyInfo pi = new PropertyInfo();
+        pi.setName("iPadId");
+        pi.setValue(sharedPrefs.getUuid());
+        pi.setType(String.class);
+        Request.addProperty(pi);
+
+        PropertyInfo pi2 = new PropertyInfo();
+        pi2.setName("user");
+        pi2.setValue(sharedPrefs.getUsername());
+        pi2.setType(String.class);
+        Request.addProperty(pi2);
+
+        PropertyInfo pi3 = new PropertyInfo();
+        pi3.setName("passwordKey");
+        pi3.setValue(sharedPrefs.getEncryptedPassword());
+        pi3.setType(String.class);
+        Request.addProperty(pi3);
+		
+        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+        envelope.dotNet = true;
+        envelope.setOutputSoapObject(Request);
+        
+        HttpTransportSE androidHttpTransport = new HttpTransportSE(URL);
+        
+        
+        try
+        {
+            androidHttpTransport.call(NAMESPACE + METHOD_GETACCESSTOKEN, envelope);
+            String accessToken = envelope.getResponse().toString();
+            
+            
+            sharedPrefs.setAccessToken(accessToken);
+
+        }
+        catch(Exception e)
+        {
+        	e.printStackTrace();
+        }
+	}
+
+	private List<FileSystemEntry> getRootPaths(String uuid, String user,
+			String accessToken, Boolean retry) {
+		
+		
+		List<FileSystemEntry> result = null;
 		
 		
 		SoapObject Request = new SoapObject(NAMESPACE, METHOD_ROOTDIRECTORIES);
@@ -278,6 +345,7 @@ public class WebServiceConnection {
             SoapObject response = (SoapObject)envelope.getResponse();
             
             int totalCount = response.getPropertyCount();
+            result = new ArrayList<FileSystemEntry>();
             if (totalCount > 0 ) {
                 for (int detailCount = 0; detailCount < totalCount; detailCount++) {
                     SoapObject responseEntry = (SoapObject) response.getProperty(detailCount);
@@ -305,7 +373,9 @@ public class WebServiceConnection {
         }
         catch(Exception e)
         {
-        	return null;
+        	getAccessToken();
+        	if(retry)
+        		result = getRootPaths(sharedPrefs.getUuid(), sharedPrefs.getUsername(), sharedPrefs.getAccessToken(), false);
         }
 		return result;
 	}

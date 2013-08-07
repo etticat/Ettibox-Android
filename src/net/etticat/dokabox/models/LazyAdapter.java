@@ -12,11 +12,14 @@ import java.util.List;
 
 import net.etticat.dokabox.R;
 import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
 
  
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,13 +30,15 @@ import android.widget.TextView;
  
 public class LazyAdapter extends BaseAdapter {
  
-    private Activity activity;
+    private Context activity;
     private List<FileSystemEntry> data;
     private static LayoutInflater inflater=null;
+    private Resources resources;
  
-    public LazyAdapter(Activity a, List<FileSystemEntry> d) {
-        activity = a;
-        data=d;
+    public LazyAdapter(Context context, List<FileSystemEntry> fileSystemEntries) {
+        activity = context;
+        data=fileSystemEntries;
+        resources = context.getResources();
         inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
  
@@ -65,7 +70,20 @@ public class LazyAdapter extends BaseAdapter {
         title.setText(song.getName());
         artist.setText(song.getAlternationDate().toString());
         duration.setText(""+song.getId());
-        // thumb_image.setImageURI(Uri.parse(song.getUri()));
+        
+        thumb_image.setImageDrawable(getIcon(song));
         return vi;
+    }
+    
+    private Drawable getIcon(FileSystemEntry song){
+    	
+    	if(song.getType() == FileSystemEntryType.FOLDER)
+    		return resources.getDrawable(R.drawable.ic_folder);
+    	
+    	
+    	// TODO Switch all file Types
+    	
+    	
+    	return resources.getDrawable(R.drawable.ic_file);
     }
 }

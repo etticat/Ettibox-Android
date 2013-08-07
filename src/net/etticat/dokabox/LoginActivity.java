@@ -56,7 +56,7 @@ public class LoginActivity extends Activity {
 
 		setContentView(R.layout.activity_login);
 		
-		webServiceConnection = new WebServiceConnection();
+		webServiceConnection = new WebServiceConnection(this);
 		sharedPrefs = new SharedPrefs(this);
 
 		// Set up the login form.
@@ -211,7 +211,7 @@ public class LoginActivity extends Activity {
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			
-			userData = webServiceConnection.login(mEmail, mPassword, uuid);
+			userData = webServiceConnection.login(mEmail, mPassword);
 			
 			if (userData.getName() != null) {			
 				return true;
@@ -227,11 +227,6 @@ public class LoginActivity extends Activity {
 			showProgress(false);
 
 			if (success) {
-				
-				sharedPrefs.setUsername(userData.getName());
-				sharedPrefs.setAccessToken(userData.getAccessToken());
-				sharedPrefs.setEncryptedPassword(userData.getEncryptedPassword());	
-				
 				finish();
 			} else {
 				mPasswordView

@@ -98,7 +98,7 @@ public class ItemListFragment extends ListFragment {
     	
 		entryDbHandler = new EntryDbHandler(getActivity());
 		sharedPrefs = new SharedPrefs(getActivity());
-		webServiceConnection = new WebServiceConnection();
+		webServiceConnection = new WebServiceConnection(getActivity());
 		
 	}
 	
@@ -251,9 +251,7 @@ public class ItemListFragment extends ListFragment {
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			
-			entries = webServiceConnection.getDirectoryContent(uuid, user, accessToken, id);
-			
-			//TODO Access Token validation
+			entries = webServiceConnection.getDirectoryContent(id, true);
 			
 			if (entries != null) {			
 				return true;
