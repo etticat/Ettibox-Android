@@ -34,6 +34,7 @@
         <activity
             android:name="net.etticat.dokabox.LoginActivity"
             android:label="@string/title_activity_login"
+            
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
     </application>

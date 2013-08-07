@@ -1,9 +1,11 @@
 package net.etticat.dokabox.models;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import net.etticat.dokabox.LoginActivity;
 import net.etticat.dokabox.dto.FileSystemEntry;
 import net.etticat.dokabox.dto.UserData;
 import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
@@ -13,8 +15,11 @@ import org.ksoap2.serialization.PropertyInfo;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+import org.xmlpull.v1.XmlPullParserException;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 
 
 public class WebServiceConnection {
@@ -120,7 +125,7 @@ public class WebServiceConnection {
 		
 		
 		if(id == 0)
-			return getRootPaths(sharedPrefs.getUuid(), sharedPrefs.getUsername(), sharedPrefs.getAccessToken(), true);
+			return getRootPaths(true);
 		
 
 		List<FileSystemEntry> result = null;
@@ -245,19 +250,22 @@ public class WebServiceConnection {
                 }
             }
         }
-        catch(Exception e)
+        catch(IOException e)
         {
         	
-        	getAccessToken();
-        	if(retry)
+        	if(e.getMessage().equals("No authentication challenges found")){
+        	if(getAccessToken() && retry)
         		result = getDirectoryContent(id, false);
-        }
+        	}
+        } catch (XmlPullParserException e) {
+        	
+		}
 		
 		return result;
 		
 	}
 
-	private void getAccessToken() {
+	private Boolean getAccessToken() {
 
 		
 		
@@ -298,14 +306,25 @@ public class WebServiceConnection {
             sharedPrefs.setAccessToken(accessToken);
 
         }
-        catch(Exception e)
+        catch(IOException e)
         {
-        	e.printStackTrace();
-        }
+        	if(e.getMessage().equals("No authentication challenges found")){
+        		sharedPrefs.setUsername("");
+        		sharedPrefs.setEncryptedPassword("");
+        		sharedPrefs.setAccessToken("");
+        		
+        		Intent intent = new Intent(context, LoginActivity.class);
+    			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        		context.startActivity(intent);
+        	}
+        	return false;
+        } catch (XmlPullParserException e) {
+    		return false;
+		}
+        return true;
 	}
 
-	private List<FileSystemEntry> getRootPaths(String uuid, String user,
-			String accessToken, Boolean retry) {
+	private List<FileSystemEntry> getRootPaths(Boolean retry) {
 		
 		
 		List<FileSystemEntry> result = null;
@@ -316,19 +335,19 @@ public class WebServiceConnection {
 		
 		PropertyInfo pi = new PropertyInfo();
         pi.setName("iPadId");
-        pi.setValue(uuid);
+        pi.setValue(sharedPrefs.getUuid());
         pi.setType(String.class);
         Request.addProperty(pi);
 
         PropertyInfo pi2 = new PropertyInfo();
         pi2.setName("user");
-        pi2.setValue(user);
+        pi2.setValue(sharedPrefs.getUsername());
         pi2.setType(String.class);
         Request.addProperty(pi2);
 
         PropertyInfo pi3 = new PropertyInfo();
         pi3.setName("accessToken");
-        pi3.setValue(accessToken);
+        pi3.setValue(sharedPrefs.getEncryptedPassword());
         pi3.setType(String.class);
         Request.addProperty(pi3);
 		
@@ -371,12 +390,16 @@ public class WebServiceConnection {
                 }
             }
         }
-        catch(Exception e)
+        catch(IOException e)
         {
-        	getAccessToken();
-        	if(retry)
-        		result = getRootPaths(sharedPrefs.getUuid(), sharedPrefs.getUsername(), sharedPrefs.getAccessToken(), false);
-        }
-		return result;
+        	
+        	if(e.getMessage().equals("No authentication challenges found")){
+        	if(getAccessToken() && retry)
+        		result = getRootPaths(false);
+        	}
+        } catch (XmlPullParserException e) {
+        	
+		}
+        return result;
 	}
 }
