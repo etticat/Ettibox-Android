@@ -20,7 +20,6 @@ import net.etticat.dokabox.dbmodels.EntryDbHandler;
 import net.etticat.dokabox.dto.FileSystemEntry;
 import net.etticat.dokabox.dto.UserData;
 import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
-import net.etticat.dokabox.dummy.DummyContent;
 import net.etticat.dokabox.models.LazyAdapter;
 import net.etticat.dokabox.models.SharedPrefs;
 import net.etticat.dokabox.models.WebServiceConnection;
@@ -132,8 +131,11 @@ public class ItemListFragment extends ListFragment {
 	}
 
 	private void refreshListView(List<FileSystemEntry> entries){
-		mLazyAdapter = new LazyAdapter(getActivity(), entries);
-		setListAdapter(mLazyAdapter);
+		Activity activity = getActivity();
+		if(activity != null){
+			mLazyAdapter = new LazyAdapter(activity, entries);
+			setListAdapter(mLazyAdapter);
+		}
 
 	}
 	public void setId(Integer id) {
@@ -253,11 +255,7 @@ public class ItemListFragment extends ListFragment {
 			
 			entries = webServiceConnection.getDirectoryContent(id, true);
 			
-			if (entries != null) {			
-				return true;
-			}
-
-			return false;
+			return (entries != null);
 		}
 
 
@@ -267,13 +265,9 @@ public class ItemListFragment extends ListFragment {
 
 			if (success) {
 				refreshListView(entries);
-				
 				entryDbHandler.replaceEntries(entries, id);
 				
-				
-			} else {
-				
-			}
+			} 
 		}
 
 		@Override

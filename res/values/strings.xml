@@ -3,5 +3,16 @@
 
     <string name="app_name">Dokabox</string>
     <string name="title_item_detail">Item Detail</string>
+    
+    
+    
+<!--     DetailView -->
+    <string name="detail_preview_picture_description">Preview Picture</string>
+    <string name="detail_size">Size: %s</string>
+    <string name="detail_name">Name: %s</string>
+    <string name="detail_download">Downoad</string>
+    <string name="detail_open">Open</string>
+    <string name="detail_preview">Preview</string>
+    <string name="detail_sync_subscription">Synchronize</string>
 
 </resources>

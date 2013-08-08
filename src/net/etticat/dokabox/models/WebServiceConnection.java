@@ -347,7 +347,7 @@ public class WebServiceConnection {
 
         PropertyInfo pi3 = new PropertyInfo();
         pi3.setName("accessToken");
-        pi3.setValue(sharedPrefs.getEncryptedPassword());
+        pi3.setValue(sharedPrefs.getAccessToken());
         pi3.setType(String.class);
         Request.addProperty(pi3);
 		

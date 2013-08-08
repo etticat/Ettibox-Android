@@ -68,6 +68,13 @@ public class ItemListActivity extends FragmentActivity implements
 			itemListFragment.setActivateOnItemClick(true);
 		}
 
+//		TESTING
+		Intent detailIntent = new Intent(this, ItemDetailActivity.class);
+		detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, "" + 24601);
+		startActivity(detailIntent);
+//		TESTING
+		
+		
 		// TODO: If exposing deep links into your app, handle intents here.
 	}
 
@@ -111,7 +118,7 @@ public class ItemListActivity extends FragmentActivity implements
 			// In single-pane mode, simply start the detail activity
 			// for the selected item ID.
 			Intent detailIntent = new Intent(this, ItemDetailActivity.class);
-			detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getId());
+			detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, "" + item.getId());
 			startActivity(detailIntent);
 		}
 	}
