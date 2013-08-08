@@ -14,5 +14,8 @@
     <string name="detail_open">Open</string>
     <string name="detail_preview">Preview</string>
     <string name="detail_sync_subscription">Synchronize</string>
+    <string name="download_service_notification_ticker_text">Download started</string>
+    <string name="download_service_notification_title">Download</string>
+    <string name="download_service_notification_message">Download in progress</string>
 
 </resources>
