@@ -203,15 +203,12 @@ public class WebServiceConnection {
                     }                    
                     if (responseEntry.hasProperty("AlternationDate")) {
 //                    	entry.setAlternationDate(responseEntry.getPropertyAsString("AlternationDate"));
-                    }                    
-                    if (responseEntry.hasProperty("ParentUnc")) {
-                    	entry.setParentId(Integer.valueOf(responseEntry.getPropertyAsString("ParentUnc")));
-                    }                    
+                    }                     
                     if (responseEntry.hasProperty("Size")) {
                     	entry.setSize(Integer.valueOf(responseEntry.getPropertyAsString("Size")));
                     }                               
                     entry.setAlternationDate(new Date(0));
-                    
+                    entry.setParentId(id);
                     entry.setType(FileSystemEntryType.FOLDER);
                     
                     result.add(entry);
@@ -237,14 +234,12 @@ public class WebServiceConnection {
                     if (responseEntry.hasProperty("AlternationDate")) {
 //                    	entry.setAlternationDate(responseEntry.getPropertyAsString("AlternationDate"));
                     }                    
-                    if (responseEntry.hasProperty("ParentUnc")) {
-                    	entry.setParentId(Integer.valueOf(responseEntry.getPropertyAsString("ParentUnc")));
-                    }                    
                     if (responseEntry.hasProperty("Size")) {
                     	entry.setSize(Integer.valueOf(responseEntry.getPropertyAsString("Size")));
                     }                               
                     entry.setAlternationDate(new Date(0));
                     entry.setType(FileSystemEntryType.FILE);
+                    entry.setParentId(id);
                     
                     result.add(entry);
                 }

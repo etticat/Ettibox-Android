@@ -37,6 +37,7 @@
 
     <FrameLayout
         android:layout_width="match_parent"
+        android:id="@+id/download_container"
         android:layout_height="wrap_content" >
 
         <Button
@@ -52,6 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:onClick="onButtonClick"
         android:text="@string/detail_open" />
 
     <Button
@@ -59,6 +61,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:onClick="onButtonClick"
         android:text="@string/detail_preview" />
 
     <CheckBox
@@ -67,5 +70,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/detail_sync_subscription" />
+
 
 </LinearLayout>

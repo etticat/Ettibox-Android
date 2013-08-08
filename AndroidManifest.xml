@@ -37,6 +37,7 @@
             
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
+        <service android:name="net.etticat.dokabox.DownloadService"></service>
     </application>
 
 </manifest>
