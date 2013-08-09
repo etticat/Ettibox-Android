@@ -7,7 +7,10 @@
     <uses-sdk
         android:minSdkVersion="11"
         android:targetSdkVersion="17" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -34,10 +37,30 @@
         <activity
             android:name="net.etticat.dokabox.LoginActivity"
             android:label="@string/title_activity_login"
-            
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
-        <service android:name="net.etticat.dokabox.DownloadService"></service>
+
+        <service android:name="net.etticat.dokabox.DownloadService" >
+        </service>
+
+        <activity
+            android:name="net.etticat.dokabox.UploadActivity"
+            android:theme="@android:style/Theme.DeviceDefault.Light.Dialog"
+            android:excludeFromRecents="true"
+            android:label="@string/title_activity_upload" >
+            <intent-filter>
+			    <action android:name="android.intent.action.VIEW" />
+			    <category android:name="android.intent.category.DEFAULT"/>
+ 			    <data android:scheme="file" />
+			    <data android:mimeType="application/*" />
+			    <data android:mimeType="audio/*" />
+			    <data android:mimeType="image/*" />
+			    <data android:mimeType="message/*" />
+			    <data android:mimeType="multipart/*" />
+			    <data android:mimeType="text/*" />
+			    <data android:mimeType="video/*" />
+			</intent-filter>
+        </activity>
     </application>
 
 </manifest>

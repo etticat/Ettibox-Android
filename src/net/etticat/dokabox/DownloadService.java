@@ -1,16 +1,28 @@
 package net.etticat.dokabox;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Random;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 
 
 import android.app.Notification;
@@ -21,13 +33,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ClipData.Item;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 import net.etticat.dokabox.dto.FileSystemEntry;
 import net.etticat.dokabox.dbmodels.EntryDbHandler;
+import net.etticat.dokabox.models.WebServiceConnection;
+import net.etticat.dokabox.models.WebServiceConnection.OnFileTransferProgressHandler;
 
-public class DownloadService  extends Service{
+public class DownloadService  extends Service implements OnFileTransferProgressHandler{
 
 	public static final int MSG_SAY_HELLO = 234;
 	// Binder given to clients
@@ -38,17 +53,15 @@ public class DownloadService  extends Service{
 	BoundServiceListener mListener;
 	public boolean bound = false;
 	private Thread thread;
-	private FileSystemEntry mEntry;
 	private EntryDbHandler entryDbConnection;
 	private NotificationManager mNotificationManager;
 	private NotificationCompat.Builder mBuilder;
 	private Notification mNotification;
+	private WebServiceConnection webServiceConnection;
 
 
-	private final int TIMEOUT_CONNECTION = 5000;//5sec
-	private final int TIMEOUT_SOCKET = 30000;//30sec
-	
 	private Queue<FileSystemEntry> downloadQueue;
+	private FileSystemEntry actualDownloadItem;
 
 	int count = 0;
 
@@ -86,17 +99,19 @@ public class DownloadService  extends Service{
 
 	public interface BoundServiceListener {
 
-		public void refreshProgress(Integer value);
+		public void refreshProgress(FileSystemEntry entry, Integer value);
+		public void onDownloadFinished(FileSystemEntry entry);
+		public void onDownloadAdded();
 	}
 
 
 	@Override
 	public void onCreate() {
 
+		webServiceConnection = new WebServiceConnection(getApplicationContext());
 		downloadQueue = new LinkedList<FileSystemEntry>();
 
 		entryDbConnection = new EntryDbHandler(getApplicationContext());
-		//mEntry = entryDbConnection();
 		showNotification();
 
 		thread = new Thread(new Runnable() {
@@ -105,22 +120,32 @@ public class DownloadService  extends Service{
 			@Override
 			public void run() {
 
-
 				try {
 					Thread.sleep(2000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				while(true){
-					FileSystemEntry entry = downloadQueue.poll();
-					if(entry == null)
+					actualDownloadItem = downloadQueue.poll();
+					if(actualDownloadItem == null)
 						break;
-					
-					Download("", "");
+
+					mBuilder.setContentTitle(actualDownloadItem.getName());
+
+					startForeground(ONGOING_NOTIFICATION_ID, mBuilder.build());
+
+					String state = Environment.getExternalStorageState();
+					if (Environment.MEDIA_MOUNTED.equals(state)) {
+
+						webServiceConnection.download(actualDownloadItem, DownloadService.this, true);
+					}
 
 				}
+				DownloadService.this.stopSelf();
+				showEndNotification();
 
 			}
+
 		});
 		thread.start();
 
@@ -150,6 +175,9 @@ public class DownloadService  extends Service{
 		if(entry != null)
 			downloadQueue.add(entryDbConnection.getFileSystemEntry(id));
 
+		if(bound && mListener != null)
+			mListener.onDownloadAdded();
+		
 		return super.onStartCommand(intent, flags, startId);
 	}
 
@@ -181,60 +209,22 @@ public class DownloadService  extends Service{
 		startForeground(ONGOING_NOTIFICATION_ID, mNotification);
 	}
 
-	private void Download(String downloadUrl, String filename){
+	@Override
+	public void progressChanged(FileSystemEntry entry, Integer value) {
 
+		mBuilder.setProgress(100, value, false);
 
-		URL url;
-		try {
-			url = new URL(downloadUrl);
-
-
-			//Open a connection to that URL.
-			URLConnection ucon = url.openConnection();
-	
-			//this timeout affects how long it takes for the app to realize there's a connection problem
-			ucon.setReadTimeout(TIMEOUT_CONNECTION);
-			ucon.setConnectTimeout(TIMEOUT_SOCKET);
-	
-	
-			//Define InputStreams to read from the URLConnection.
-			// uses 3KB download buffer
-			InputStream is = ucon.getInputStream();
-			BufferedInputStream inStream = new BufferedInputStream(is, 1024 * 5);
-			FileOutputStream outStream = new FileOutputStream(filename);
-			byte[] buff = new byte[5 * 1024];
-	
-			//Read bytes (and store them) until there is nothing more to read(-1)
-			int totalLength = 123;
-			
-			int restLength;
-			while ((restLength = inStream.read(buff)) != -1)
-			{
-				outStream.write(buff,0,restLength);
-				
-				Integer percent = 100-(100*restLength/totalLength);
-				mBuilder.setProgress(100, percent, false);
-				startForeground(ONGOING_NOTIFICATION_ID, mBuilder.build());
-				if(bound)
-					mListener.refreshProgress(percent);
-				
-				
-				
-			}
-	
-			//clean up
-			outStream.flush();
-			outStream.close();
-			inStream.close();
-			
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		startForeground(ONGOING_NOTIFICATION_ID, mBuilder.build());
+		if(bound)
+			mListener.refreshProgress(entry, value);
 
 	}
 
+	private void showEndNotification() {
+		// TODO Notification when Download is finished
+
+	}
+	public Boolean isEntryInQueue(FileSystemEntry entry){
+		return downloadQueue.contains(entry) || entry.equals(actualDownloadItem);
+	}
 }

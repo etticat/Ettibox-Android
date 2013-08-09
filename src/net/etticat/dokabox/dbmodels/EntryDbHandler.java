@@ -5,8 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.util.Log;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -148,7 +150,7 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 		Cursor cursor = db.query(TABLE_ENTRIES, new String[] { KEY_ID,
 				KEY_NAME, KEY_TYPE, KEY_ALTERNATION_DATE, KEY_PARENT_ID, KEY_ACTIVE, 
 				KEY_SYNC_SUBSCRIBED, KEY_SIZE}, KEY_PARENT_ID + "=?",
-						new String[] { String.valueOf(parentId) }, null, null, KEY_TYPE + " DESC");
+						new String[] { String.valueOf(parentId) }, null, null, KEY_TYPE + " ASC");
 		
 		if (cursor != null){
 			// looping through all rows and adding to list
@@ -195,6 +197,27 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 			replaceEntry(entry);
 		}
 		
+	}
+
+	public File getPath(FileSystemEntry entry) {
+		
+		String path = "";
+		
+		while(entry.getParentId() != 0){
+			entry = getFileSystemEntry(entry.getParentId());
+			path = entry.getName() + "/" + path;
+		}
+		path = "/dokabox/" + entry.getId() + "/" + path;
+
+		return new File(
+				Environment.getExternalStorageDirectory(), path);
+	}
+
+	public FileSystemEntry getRootEntry(FileSystemEntry entry) {
+		while(entry.getParentId() != 0){
+			entry = getFileSystemEntry(entry.getParentId());
+		}
+		return entry;
 	}
 
 //

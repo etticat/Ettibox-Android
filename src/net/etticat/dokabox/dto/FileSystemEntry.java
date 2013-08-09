@@ -84,5 +84,12 @@ public class FileSystemEntry {
 	public void setSyncSubscribed(Boolean syncSubscribed) {
 		this.syncSubscribed = syncSubscribed;
 	}
+	@Override
+	public boolean equals(Object o) {
+		return 
+			o instanceof FileSystemEntry 
+			&& o != null 
+			&& ((FileSystemEntry) o).getId() == this.getId();
+	}
 	
 }

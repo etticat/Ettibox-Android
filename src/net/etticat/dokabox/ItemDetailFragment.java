@@ -1,45 +1,47 @@
 package net.etticat.dokabox;
 
+import java.io.File;
 import java.text.DecimalFormat;
-import java.util.LinkedList;
-import java.util.Queue;
-
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.webkit.WebView.FindListener;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import com.actionbarsherlock.app.SherlockFragment;
+
+
+
+
+
 import net.etticat.dokabox.DownloadService.BoundServiceListener;
 import net.etticat.dokabox.DownloadService.LocalBinder;
-import net.etticat.dokabox.dto.FileSystemEntry;
-
-
 import net.etticat.dokabox.dbmodels.EntryDbHandler;
+import net.etticat.dokabox.dto.FileSystemEntry;
 /**
  * A fragment representing a single Item detail screen. This fragment is either
  * contained in a {@link ItemListActivity} in two-pane mode (on tablets) or a
  * {@link ItemDetailActivity} on handsets.
  */
-public class ItemDetailFragment extends Fragment implements OnClickListener, BoundServiceListener {
+public class ItemDetailFragment extends SherlockFragment implements OnClickListener, BoundServiceListener {
 	/**
 	 * The fragment argument representing the item ID that this fragment
 	 * represents.
 	 */
 	public static final String ARG_ITEM_ID = "item_id";
-	private EntryDbHandler mEntryDbHandler;
+	private EntryDbHandler mEntryDbHandler; 
 	
 	private FileSystemEntry mEntry;
 	
@@ -49,7 +51,9 @@ public class ItemDetailFragment extends Fragment implements OnClickListener, Bou
 	private Button bt_download;
 	private Button bt_open;
 	
+	
 	private View mView;
+	FrameLayout downloadContainer;
 
 	private DownloadService mService = null;
     private Boolean mBound = false;
@@ -119,6 +123,7 @@ public class ItemDetailFragment extends Fragment implements OnClickListener, Bou
 		bt_download.setOnClickListener(this);
 		bt_open = (Button) mView.findViewById(R.id.bt_detail_open);
 		bt_open.setOnClickListener(this);
+		downloadContainer = (FrameLayout) mView.findViewById(R.id.download_container);
 	}
 
 	@Override
@@ -151,16 +156,44 @@ public class ItemDetailFragment extends Fragment implements OnClickListener, Bou
 		switch (view.getId()) {
 		case R.id.bt_detail_download:
 			getActivity().startService(downloadServiceIntent);
-			
+			onDownloadAdded();
 			break;
 		case R.id.bt_detail_open:
-			getActivity().startService(downloadServiceIntent);
+			openFile();
 			break;
 		default:
 			break;
 		}
 	}
 	
+	private void openFile() {
+
+		File file = new File(mEntryDbHandler.getPath(mEntry), mEntry.getName());
+	    if(file.exists()){
+			Uri uri = Uri.fromFile(file);
+			
+
+			String mime = getMimeType(uri.toString());
+			
+			Intent intent = new Intent();
+			intent.setAction(android.content.Intent.ACTION_VIEW);
+			intent.setDataAndType(uri, mime);
+			startActivity(intent); 
+	    }
+		
+	}
+	
+	private String getMimeType(String url)
+	{
+	    String type = null;
+	    String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+	    if (extension != null) {
+	        MimeTypeMap mime = MimeTypeMap.getSingleton();
+	        type = mime.getMimeTypeFromExtension(extension);
+	    }
+	    return type;
+	}
+
 	/** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -174,6 +207,7 @@ public class ItemDetailFragment extends Fragment implements OnClickListener, Bou
             mService = binder.getService();
             
             mBound = true;
+    		onDownloadAdded();
         }
 
         @Override
@@ -184,20 +218,52 @@ public class ItemDetailFragment extends Fragment implements OnClickListener, Bou
     };
 
 	@Override
-	public void refreshProgress(final Integer value) {
-		getActivity().runOnUiThread(new Runnable() {
-			
-			@Override
-			public void run() {
-				if(downloadProgressBar == null){
-					FrameLayout frameLayout = (FrameLayout) mView.findViewById(R.id.download_container);
-					frameLayout.removeAllViews();
-					downloadProgressBar = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleHorizontal);
-					frameLayout.addView(downloadProgressBar);
+	public void refreshProgress(FileSystemEntry entry, final Integer value) {
+		
+		if(entry.equals(mEntry) && getActivity() != null){
+			getActivity().runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					if(downloadProgressBar == null){
+						onDownloadAdded();
+					}
+					if(downloadProgressBar != null){
+						downloadProgressBar.setIndeterminate(false);
+						downloadProgressBar.setProgress(value);
+					}
 				}
-				downloadProgressBar.setProgress(value);
-			}
-		});
+			});
+		}
+	}
 
+	@Override
+	public void onDownloadFinished(FileSystemEntry entry) {
+		
+		if(entry.equals(mEntry) && getActivity() != null) {
+			getActivity().runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					downloadContainer.removeAllViews();
+					
+				}
+			});
+		}
+	}
+
+	@Override
+	public void onDownloadAdded(){
+		if(!mBound || !mService.isEntryInQueue(mEntry))
+			return;
+		
+		if(downloadProgressBar == null){
+			downloadContainer.removeAllViews();
+			downloadProgressBar = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleHorizontal);
+			downloadProgressBar.setIndeterminate(true);
+			downloadContainer.addView(downloadProgressBar);
+			
+		}
+		
 	}
 }

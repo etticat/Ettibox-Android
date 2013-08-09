@@ -1,30 +1,33 @@
 package net.etticat.dokabox;
 
-import net.etticat.dokabox.dto.UserData;
-import net.etticat.dokabox.models.SharedPrefs;
-import net.etticat.dokabox.models.WebServiceConnection;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Intent;
-import android.content.ClipData.Item;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.internal.nineoldandroids.animation.Animator;
+import com.actionbarsherlock.view.Menu;
+
+import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
+
+import net.etticat.dokabox.dto.UserData;
+import net.etticat.dokabox.models.SharedPrefs;
+import net.etticat.dokabox.models.WebServiceConnection;
+
 
 /**
  * Activity which displays a login screen to the user, offering registration as
  * well.
  */
-public class LoginActivity extends Activity {
+public class LoginActivity extends SherlockActivity {
 
 
 	/**
@@ -96,7 +99,7 @@ public class LoginActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		getMenuInflater().inflate(R.menu.login, menu);
+		getSupportMenuInflater().inflate(R.menu.login, menu);
 		return true;
 	}
 
@@ -156,7 +159,7 @@ public class LoginActivity extends Activity {
 	/**
 	 * Shows the progress UI and hides the login form.
 	 */
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+	@SuppressLint("NewApi")
 	private void showProgress(final boolean show) {
 		// On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
 		// for very easy animations. If available, use these APIs to fade-in
@@ -165,6 +168,8 @@ public class LoginActivity extends Activity {
 			int shortAnimTime = getResources().getInteger(
 					android.R.integer.config_shortAnimTime);
 
+			// TODO FIX LOGIN ANIMATION
+			/*
 			mLoginStatusView.setVisibility(View.VISIBLE);
 			mLoginStatusView.animate().setDuration(shortAnimTime)
 					.alpha(show ? 1 : 0)
@@ -186,6 +191,8 @@ public class LoginActivity extends Activity {
 									: View.VISIBLE);
 						}
 					});
+					
+					*/
 		} else {
 			// The ViewPropertyAnimator APIs are not available, so simply show
 			// and hide the relevant UI components.

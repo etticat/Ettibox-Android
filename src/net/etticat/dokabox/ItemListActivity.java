@@ -1,13 +1,17 @@
 package net.etticat.dokabox;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+
 import net.etticat.dokabox.dto.FileSystemEntry;
 import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
 import net.etticat.dokabox.models.SharedPrefs;
-import android.content.Intent;
-import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+
+
 
 /**
  * An activity representing a list of Items. This activity has different
@@ -24,7 +28,7 @@ import android.support.v4.app.FragmentTransaction;
  * This activity also implements the required {@link ItemListFragment.Callbacks}
  * interface to listen for item selections.
  */
-public class ItemListActivity extends FragmentActivity implements
+public class ItemListActivity extends SherlockFragmentActivity implements
 		ItemListFragment.Callbacks {
 
 	/**
@@ -32,7 +36,7 @@ public class ItemListActivity extends FragmentActivity implements
 	 * device.
 	 */
 	private SharedPrefs sharedPrefs;
-	private boolean mTwoPane;
+	private boolean mTwoPane; 
 	ItemListFragment itemListFragment;
 
 	@Override
@@ -65,13 +69,15 @@ public class ItemListActivity extends FragmentActivity implements
 
 			// In two-pane mode, list items should be given the
 			// 'activated' state when touched.
-			itemListFragment.setActivateOnItemClick(true);
+			
+			//T
+			// itemListFragment.setActivateOnItemClick(true);
 		}
 
 //		TESTING
-		Intent detailIntent = new Intent(this, ItemDetailActivity.class);
-		detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, "" + 24601);
-		startActivity(detailIntent);
+//		Intent detailIntent = new Intent(this, UploadActivity.class);
+//		detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, "" + 24601);
+//		startActivity(detailIntent);
 //		TESTING
 		
 		
@@ -107,7 +113,7 @@ public class ItemListActivity extends FragmentActivity implements
 			// adding or replacing the detail fragment using a
 			// fragment transaction.
 			Bundle arguments = new Bundle();
-			arguments.putInt(ItemDetailFragment.ARG_ITEM_ID, item.getId());
+			arguments.putString(ItemDetailFragment.ARG_ITEM_ID, "" +item.getId());
 			
 			ItemDetailFragment fragment = new ItemDetailFragment();
 			fragment.setArguments(arguments);

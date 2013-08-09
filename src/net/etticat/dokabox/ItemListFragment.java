@@ -2,18 +2,22 @@ package net.etticat.dokabox;
 
 import java.util.List;
 
-
 import android.app.Activity;
-import android.content.Intent;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.view.ViewGroup;
 import android.widget.ListView;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockListFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.handmark.pulltorefresh.library.PullToRefreshBase;
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
 import net.etticat.dokabox.LoginActivity.UserLoginTask;
 import net.etticat.dokabox.dbmodels.EntryDbHandler;
@@ -33,7 +37,7 @@ import net.etticat.dokabox.models.WebServiceConnection;
  * Activities containing this fragment MUST implement the {@link Callbacks}
  * interface.
  */
-public class ItemListFragment extends ListFragment {
+public class ItemListFragment extends SherlockListFragment {
 
 	/**
 	 * The serialization (saved instance state) Bundle key representing the
@@ -69,6 +73,8 @@ public class ItemListFragment extends ListFragment {
 	private RefreshTask mRefreshTask;
 	private SharedPrefs sharedPrefs;
 	private LazyAdapter mLazyAdapter;
+	
+	private PullToRefreshListView mPullToRefreshListView;
 
 	public WebServiceConnection webServiceConnection;
 
@@ -130,9 +136,29 @@ public class ItemListFragment extends ListFragment {
 		return super.onOptionsItemSelected(item);
 	}
 
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+	       View layout = inflater.inflate(R.layout.fragment_list, container, false);
+	        ListView lv = (ListView) layout.findViewById(R.id.list);
+
+	        mPullToRefreshListView = new PullToRefreshListView(getActivity());
+	        mPullToRefreshListView.setLayoutParams(lv.getLayoutParams());
+
+	        mPullToRefreshListView.setOnRefreshListener(new PullToRefreshBase.OnRefreshListener<ListView>()
+            {
+                @Override
+                public void onRefresh(PullToRefreshBase<ListView> refreshView) {
+                    refresh();
+                }
+            });
+
+	        return mPullToRefreshListView;
+	}
+
 	private void refreshListView(List<FileSystemEntry> entries){
-		Activity activity = getActivity();
-		if(activity != null){
+		Context activity = getActivity();
+		if(activity != null){ 
 			mLazyAdapter = new LazyAdapter(activity, entries);
 			setListAdapter(mLazyAdapter);
 		}
@@ -193,8 +219,7 @@ public class ItemListFragment extends ListFragment {
 		// Notify the active callbacks interface (the activity, if the
 		// fragment is attached to one) that an item has been selected.
 		
-		FileSystemEntry entry = mLazyAdapter.getItem(position);
-			mCallbacks.onItemSelected(mLazyAdapter.getItem(position));
+		mCallbacks.onItemSelected(mLazyAdapter.getItem(position-1));
 	}
 
 	@Override
@@ -268,6 +293,7 @@ public class ItemListFragment extends ListFragment {
 				entryDbHandler.replaceEntries(entries, id);
 				
 			} 
+			mPullToRefreshListView.onRefreshComplete();
 		}
 
 		@Override
