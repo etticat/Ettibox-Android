@@ -19,7 +19,7 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 
 	// All Static variables
 	// Database Version
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 7;
 
 	// Database Name
 	private static final String DATABASE_NAME = "dokabox";
@@ -36,6 +36,8 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 	private static final String KEY_ACTIVE = "active";
 	private static final String KEY_SYNC_SUBSCRIBED = "syncSubscribed";
 	private static final String KEY_SIZE = "size";
+	private static final String KEY_DOWNLOAD_DATE = "downloadedDate";
+	private static final String KEY_DOWNLOAD_ALTERNATION_DATE = "downloadedAlternationDate";
 
 	private static final String TAG = "EntryDbHandler";
 
@@ -54,8 +56,9 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 				+ KEY_PARENT_ID + " INTEGER,"
 				+ KEY_ACTIVE + " INTEGER,"
 				+ KEY_SYNC_SUBSCRIBED + " INTEGER,"
-				+ KEY_SIZE + " INTEGER" + ")";
-		Log.d(TAG, CREATE_CONTACTS_TABLE);
+				+ KEY_SIZE + " INTEGER, " 
+				+ KEY_DOWNLOAD_DATE + " INTEGER, " 
+				+ KEY_DOWNLOAD_ALTERNATION_DATE + " INTEGER )";
 		db.execSQL(CREATE_CONTACTS_TABLE);
 	}
 
@@ -69,7 +72,69 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 	// Adding new contact
-	public long replaceEntry(FileSystemEntry entry) {
+
+	public FileSystemEntry getFileSystemEntry(int id) {
+		SQLiteDatabase db = this.getReadableDatabase();
+
+		Cursor cursor = db.query(TABLE_ENTRIES, new String[]{KEY_ID,
+				KEY_NAME, KEY_TYPE, KEY_ALTERNATION_DATE, KEY_PARENT_ID, KEY_ACTIVE, 
+				KEY_SYNC_SUBSCRIBED, KEY_SIZE, KEY_DOWNLOAD_DATE, KEY_DOWNLOAD_ALTERNATION_DATE}, KEY_ID + "=?",
+				new String[]{String.valueOf(id)}, null, null, null, null);
+		if (cursor != null){
+			if(cursor.moveToFirst()){
+				FileSystemEntry entry = new FileSystemEntry();
+				entry.setId(cursor.getInt(0));
+				entry.setName(cursor.getString(1));
+				entry.setIntegerType(cursor.getInt(2));
+				entry.setAlternationDate(new Date(cursor.getLong(3)));
+				entry.setParentId(cursor.getInt(4));
+				entry.setActive(cursor.getInt(5) == 1);
+				entry.setSyncSubscribed(cursor.getInt(6) == 1);
+				entry.setSize(cursor.getInt(7));
+				entry.setDownloadedDate(new Date(cursor.getLong(8)));
+				entry.setDownloadedAlternationDate(new Date(cursor.getLong(9)));
+
+				return entry;
+			}
+		}
+		return  null;
+
+	}
+
+	public List<FileSystemEntry> getEntries(Integer parentId) {
+		List<FileSystemEntry> result = new ArrayList<FileSystemEntry>();
+
+		SQLiteDatabase db = this.getReadableDatabase();
+
+		Cursor cursor = db.query(TABLE_ENTRIES, new String[] { KEY_ID,
+				KEY_NAME, KEY_TYPE, KEY_ALTERNATION_DATE, KEY_PARENT_ID, KEY_ACTIVE, 
+				KEY_SYNC_SUBSCRIBED, KEY_SIZE, KEY_DOWNLOAD_DATE, KEY_DOWNLOAD_ALTERNATION_DATE}, KEY_PARENT_ID + "=?",
+				new String[] { String.valueOf(parentId) }, null, null, KEY_TYPE + " ASC");
+
+		if (cursor != null){
+			if (cursor.moveToFirst()) {
+				do {
+					FileSystemEntry entry = new FileSystemEntry();
+					entry.setId(cursor.getInt(0));
+					entry.setName(cursor.getString(1));
+					entry.setIntegerType(cursor.getInt(2));
+					entry.setAlternationDate(new Date(cursor.getLong(3)));
+					entry.setParentId(cursor.getInt(4));
+					entry.setActive(cursor.getInt(5) == 1);
+					entry.setSyncSubscribed(cursor.getInt(6) == 1);
+					entry.setSize(cursor.getInt(7));
+					entry.setDownloadedDate(new Date(cursor.getLong(8)));
+					entry.setDownloadedAlternationDate(new Date(cursor.getLong(9)));
+
+
+					// Adding entry to list
+					result.add(entry);
+				} while (cursor.moveToNext());
+			}
+		}
+		return result;
+	}
+	public long replaceEnastry(FileSystemEntry entry) {
 
 		SQLiteDatabase db = this.getWritableDatabase();
 		ContentValues values = new ContentValues();
@@ -81,128 +146,96 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 		values.put(KEY_ACTIVE, entry.getActive()); 
 		values.put(KEY_SYNC_SUBSCRIBED, entry.getSyncSubscribed()); 
 		values.put(KEY_SIZE, entry.getSize()); 
+		if(entry.getDownloadedAlternationDate() != null)
+			values.put(KEY_DOWNLOAD_ALTERNATION_DATE, entry.getDownloadedAlternationDate().getTime()); 
+		if(entry.getDownloadedDate() != null)
+			values.put(KEY_DOWNLOAD_DATE, entry.getDownloadedDate().getTime()); 
+			
+		
 
 		// Inserting Row
 		return db.replace(TABLE_ENTRIES, null, values);
 	}
-	public FileSystemEntry getFileSystemEntry(int id) {
-		SQLiteDatabase db = this.getReadableDatabase();
+    public int updateEntry(FileSystemEntry entry) {
+        SQLiteDatabase db = this.getWritableDatabase();
+     
+        ContentValues values = new ContentValues();
+		values.put(KEY_ID, entry.getId()); 
+		values.put(KEY_NAME, entry.getName()); 
+		values.put(KEY_TYPE, entry.getIntegerType());
+		values.put(KEY_ALTERNATION_DATE, entry.getAlternationDate().getTime()); 
+		values.put(KEY_PARENT_ID, entry.getParentId()); 
+		values.put(KEY_ACTIVE, entry.getActive()); 
+		values.put(KEY_SYNC_SUBSCRIBED, entry.getSyncSubscribed()); 
+		values.put(KEY_SIZE, entry.getSize()); 
+		if(entry.getDownloadedAlternationDate() != null)
+			values.put(KEY_DOWNLOAD_ALTERNATION_DATE, entry.getDownloadedAlternationDate().getTime()); 
+		if(entry.getDownloadedDate() != null)
+			values.put(KEY_DOWNLOAD_DATE, entry.getDownloadedDate().getTime()); 
+     
+        // updating row
+        return db.update(TABLE_ENTRIES, values, KEY_ID + " = ?",
+                new String[] { String.valueOf(entry.getId()) });
+    }
+    public long replaceEntry(FileSystemEntry entry) {
+    	FileSystemEntry oldContact = getFileSystemEntry(entry.getId());
 
-		Cursor cursor = db.query(TABLE_ENTRIES, new String[]{KEY_ID,
-				KEY_NAME, KEY_TYPE, KEY_ALTERNATION_DATE, KEY_PARENT_ID, KEY_ACTIVE, 
-				KEY_SYNC_SUBSCRIBED, KEY_SIZE}, KEY_ID + "=?",
-				new String[]{String.valueOf(id)}, null, null, null, null);
-		if (cursor != null){
-			if(cursor.moveToFirst()){
-				FileSystemEntry entry = new FileSystemEntry();
-				entry.setId(cursor.getInt(0));
-				entry.setName(cursor.getString(1));
-				entry.setIntegerType(cursor.getInt(2));
-				entry.setAlternationDate(new Date(cursor.getInt(3)));
-				entry.setParentId(cursor.getInt(4));
-				entry.setActive(cursor.getInt(5) == 1);
-				entry.setSyncSubscribed(cursor.getInt(6) == 1);
-				entry.setSize(cursor.getInt(7));
+        if(oldContact == null)
+            return addEntry(entry);
+        
+        return updateEntry(entry);
+    }
+	public long addEntry(FileSystemEntry entry) {
 
-				// return contact
-						return entry;
-			}
-		}
-		return  null;
-
+	    SQLiteDatabase db = this.getWritableDatabase();
+	    ContentValues values = new ContentValues();
+		values.put(KEY_ID, entry.getId()); 
+		values.put(KEY_NAME, entry.getName()); 
+		values.put(KEY_TYPE, entry.getIntegerType());
+		values.put(KEY_ALTERNATION_DATE, entry.getAlternationDate().getTime()); 
+		values.put(KEY_PARENT_ID, entry.getParentId()); 
+		values.put(KEY_ACTIVE, entry.getActive()); 
+		values.put(KEY_SYNC_SUBSCRIBED, entry.getSyncSubscribed()); 
+		values.put(KEY_SIZE, entry.getSize()); 
+		if(entry.getDownloadedAlternationDate() != null)
+			values.put(KEY_DOWNLOAD_ALTERNATION_DATE, entry.getDownloadedAlternationDate().getTime()); 
+		if(entry.getDownloadedDate() != null)
+			values.put(KEY_DOWNLOAD_DATE, entry.getDownloadedDate().getTime()); 
+	 
+	    // Inserting Row
+	    return db.insert(TABLE_ENTRIES, null, values);
 	}
-	/*
-	public int updateContact(Contact contact) {
-		SQLiteDatabase db = this.getWritableDatabase();
-
-		ContentValues values = new ContentValues();
-		values.put(KEY_NAME, contact.getName());
-		values.put(KEY_PH_NO, JsonConverter.toJson(contact.getNumbers()));
-		values.put(KEY_MODIFIED, System.currentTimeMillis());
-		values.put(KEY_DELETED, contact.getDeleted());
-
-		// updating row
-		return db.update(TABLE_ENTRIES, values, KEY_ID + " = ?",
-				new String[] { String.valueOf(contact.getCid()) });
+	public void deleteEntry(FileSystemEntry entry)
+	{
+		SQLiteDatabase db= this.getWritableDatabase();
+		db.delete(TABLE_ENTRIES, KEY_ID + "=?", new String[] { ""+entry.getId()});
 	}
-	public long replaceContact(Contact contact) {
-		Contact oldContact = getFileSystemEntry(contact.getCid());
-
-		if(oldContact == null)
-			return addContact(contact);
-		else if(contact != null &&
-				contact.getName() != null &&
-				(!contact.getName().equals(oldContact.getName()) ||
-						contact.getNumbers() == null
-						|| !contact.getNumbers().equals(oldContact.getNumbers()))
-						|| contact.getDeleted() != oldContact.getDeleted()){
-
-			return updateContact(contact);
-		}
-		return 0;
-	}
-	 */
-	public List<FileSystemEntry> getEntries(Integer parentId) {
-		List<FileSystemEntry> result = new ArrayList<FileSystemEntry>();
-
-		SQLiteDatabase db = this.getReadableDatabase();
-
-		Cursor cursor = db.query(TABLE_ENTRIES, new String[] { KEY_ID,
-				KEY_NAME, KEY_TYPE, KEY_ALTERNATION_DATE, KEY_PARENT_ID, KEY_ACTIVE, 
-				KEY_SYNC_SUBSCRIBED, KEY_SIZE}, KEY_PARENT_ID + "=?",
-						new String[] { String.valueOf(parentId) }, null, null, KEY_TYPE + " ASC");
-		
-		if (cursor != null){
-			// looping through all rows and adding to list
-			if (cursor.moveToFirst()) {
-				do {
-					FileSystemEntry entry = new FileSystemEntry();
-					entry.setId(cursor.getInt(0));
-					entry.setName(cursor.getString(1));
-					entry.setIntegerType(cursor.getInt(2));
-					entry.setAlternationDate(new Date(cursor.getInt(3)));
-					entry.setParentId(cursor.getInt(4));
-					entry.setActive(cursor.getInt(5) == 1);
-					entry.setSyncSubscribed(cursor.getInt(6) == 1);
-					entry.setSize(cursor.getInt(7));
-
-
-					// Adding entry to list
-					result.add(entry);
-				} while (cursor.moveToNext());
-			}
-		}
-		return result;
-	}
-
-
 	public void deleteAll()
 	{
 		SQLiteDatabase db= this.getWritableDatabase();
 		db.delete(TABLE_ENTRIES, null, null);
-
+		
 	}
-//
-//	public void deleteContact(Contact contact) {
-//		contact.setDeleted(true);
-//		updateContact(contact);
-//	}
 
 	public void replaceEntries(List<FileSystemEntry> entries, Integer id) {
-		
-		SQLiteDatabase db= this.getWritableDatabase();
-		db.delete(TABLE_ENTRIES, KEY_PARENT_ID + "=?", new String[] { ""+id});
-		
+
+		List<FileSystemEntry> oldEntries = getEntries(id);
+
 		for (FileSystemEntry entry : entries) {
+			oldEntries.remove(entry);
 			replaceEntry(entry);
 		}
 		
+		for(FileSystemEntry oldEntry : oldEntries){
+			deleteEntry(oldEntry);
+		}
+
 	}
 
 	public File getPath(FileSystemEntry entry) {
-		
+
 		String path = "";
-		
+
 		while(entry.getParentId() != 0){
 			entry = getFileSystemEntry(entry.getParentId());
 			path = entry.getName() + "/" + path;
@@ -220,21 +253,4 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 		return entry;
 	}
 
-//
-//	public List<Integer> getAllContactIds() {
-//		List<Integer> result = new ArrayList<Integer>();
-//
-//		SQLiteDatabase db = this.getReadableDatabase();
-//
-//		Cursor cursor = db.query(TABLE_ENTRIES, new String[] { KEY_ID, KEY_DELETED }, null, null, null, null, null);
-//		if (cursor != null){
-//			if (cursor.moveToFirst()) {
-//				do {
-//					if(cursor.getInt(1) == 0)
-//						result.add(cursor.getInt(0));
-//				} while (cursor.moveToNext());
-//			}
-//		}
-//		return result;
-//	}
 }

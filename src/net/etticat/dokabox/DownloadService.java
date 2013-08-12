@@ -50,7 +50,7 @@ public class DownloadService  extends Service implements OnFileTransferProgressH
 	// Random number generator
 	Boolean running = true;
 	private int ONGOING_NOTIFICATION_ID = 1231182;
-	BoundServiceListener mListener;
+	BoundDownloadServiceListener mListener;
 	public boolean bound = false;
 	private Thread thread;
 	private EntryDbHandler entryDbConnection;
@@ -83,7 +83,7 @@ public class DownloadService  extends Service implements OnFileTransferProgressH
 	public class LocalBinder extends Binder {
 
 
-		public void setListener(BoundServiceListener listener) {
+		public void setListener(BoundDownloadServiceListener listener) {
 			mListener = listener;
 		}
 		DownloadService getService() {
@@ -97,7 +97,7 @@ public class DownloadService  extends Service implements OnFileTransferProgressH
 		return mBinder;
 	}
 
-	public interface BoundServiceListener {
+	public interface BoundDownloadServiceListener {
 
 		public void refreshProgress(FileSystemEntry entry, Integer value);
 		public void onDownloadFinished(FileSystemEntry entry);
@@ -165,8 +165,7 @@ public class DownloadService  extends Service implements OnFileTransferProgressH
 
 		Integer id;
 		try {
-			id = Integer.valueOf(intent
-					.getStringExtra(ItemDetailFragment.ARG_ITEM_ID));
+			id =  intent.getExtras().getInt(ItemDetailFragment.ARG_ITEM_ID);
 		} catch (NumberFormatException e) {
 			return super.onStartCommand(intent, flags, startId);
 		}

@@ -439,8 +439,9 @@ public class WebServiceConnection {
 				if(getAccessToken() && retry)
 					result = getRootPaths(false);
 			}
-		} catch (XmlPullParserException e) {
-
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
 		}
 		return result;
 	}
@@ -453,13 +454,6 @@ public class WebServiceConnection {
 
 		path.mkdirs();
 		File file = new File(path, entry.getName());
-
-		try {
-			Thread.sleep(4000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
 
 		try {
@@ -499,18 +493,18 @@ public class WebServiceConnection {
 				Integer percent = (int) ((100*downloadedLength/totalLength));
 				onDownloadProgress.progressChanged(entry, percent);
 
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
 			}
 
 			//clean up
 			outStream.flush();
 			outStream.close();
 			inStream.close();
+			
+			
+			entry.setDownloadedDate(new Date(file.lastModified()));
+			entry.setDownloadedAlternationDate(entry.getAlternationDate());
+			
+			entryDbHandler.replaceEntry(entry);
 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
@@ -526,10 +520,10 @@ public class WebServiceConnection {
 
 
 
-	public int uploadFile(Uri sourceFileUri, FileSystemEntry parentEntry, OnFileTransferProgressHandler downloadProgressHandler) {
+	public int uploadFile(FileSystemEntry parentEntry, OnUploadProgressHandler uploadProgressHandler) {
 
 
-
+		Boolean uploadRunning = false;
 
 		HttpURLConnection conn = null;
 		DataOutputStream dos = null;  
@@ -539,7 +533,7 @@ public class WebServiceConnection {
 		int bytesRead, bytesAvailable, bufferSize;
 		byte[] buffer;
 		int maxBufferSize = 1 * 1024 * 1024; 
-		File sourceFile = new File(sourceFileUri.getPath()); 
+		File sourceFile = new File(parentEntry.getUri().getPath()); 
 
 		String fileName = sourceFile.getName();
 		
@@ -564,20 +558,33 @@ public class WebServiceConnection {
 			bytesRead = fileInputStream.read(buffer, 0, bufferSize);  
 			while (bytesRead > 0) {
 				dos.write(buffer, 0, bufferSize);				bytesAvailable = fileInputStream.available();				bufferSize = Math.min(bytesAvailable, maxBufferSize);				bytesRead = fileInputStream.read(buffer, 0, bufferSize);   
+				if(!uploadRunning){
+					uploadRunning = true;
+					uploadProgressHandler.onUploadStart();
+				}
 			}
 			dos.writeBytes(lineEnd);			dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 			int serverResponseCode = conn.getResponseCode();			String serverResponseMessage = conn.getResponseMessage();
 
 			fileInputStream.close();			dos.flush();			dos.close();
+			
+			
 		}
-		catch (Exception e){ }
+		catch (Exception e){ 
+			uploadProgressHandler.onUploadError(e.getMessage());
+		}
 		return 1;
 
 
 	}
 
 	public interface OnFileTransferProgressHandler {
-		public void progressChanged(FileSystemEntry entry, Integer value);
+		public void progressChanged(FileSystemEntry entry, Integer percent);
+	}
+
+	public interface OnUploadProgressHandler {
+		public void onUploadStart();
+		public void onUploadError(String message);
 	}
 
 }

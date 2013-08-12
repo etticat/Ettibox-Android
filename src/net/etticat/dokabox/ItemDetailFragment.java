@@ -26,46 +26,49 @@ import com.actionbarsherlock.app.SherlockFragment;
 
 
 
-import net.etticat.dokabox.DownloadService.BoundServiceListener;
+import net.etticat.dokabox.DownloadService.BoundDownloadServiceListener;
 import net.etticat.dokabox.DownloadService.LocalBinder;
 import net.etticat.dokabox.dbmodels.EntryDbHandler;
 import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.dokabox.models.FileInfoChecker;
+import net.etticat.dokabox.models.LazyAdapter;
+import net.etticat.dokabox.models.FileInfoChecker.FileInfoStatus;
 /**
  * A fragment representing a single Item detail screen. This fragment is either
  * contained in a {@link ItemListActivity} in two-pane mode (on tablets) or a
  * {@link ItemDetailActivity} on handsets.
  */
-public class ItemDetailFragment extends SherlockFragment implements OnClickListener, BoundServiceListener {
+public class ItemDetailFragment extends SherlockFragment implements OnClickListener, BoundDownloadServiceListener {
 	/**
 	 * The fragment argument representing the item ID that this fragment
 	 * represents.
 	 */
 	public static final String ARG_ITEM_ID = "item_id";
 	private EntryDbHandler mEntryDbHandler; 
-	
+
 	private FileSystemEntry mEntry;
-	
+
 	private TextView tv_name;
 	private TextView tv_size;
 	private CheckBox cb_syncSubscription;
 	private Button bt_download;
 	private Button bt_open;
-	
-	
+
+
 	private View mView;
 	FrameLayout downloadContainer;
 
 	private DownloadService mService = null;
-    private Boolean mBound = false;
-	
-    private ProgressBar downloadProgressBar;
-    private Intent downloadServiceIntent;
-    
-    
+	private Boolean mBound = false;
+
+	private ProgressBar downloadProgressBar;
+	private Intent downloadServiceIntent;
+
+
 	/**
 	 * The dummy content this fragment is presenting.
 	 */
-	
+
 
 	/**
 	 * Mandatory empty constructor for the fragment manager to instantiate the
@@ -77,41 +80,40 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
+		downloadServiceIntent = new Intent(getActivity(), DownloadService.class);
 
 		if (!getArguments().containsKey(ARG_ITEM_ID)) {
 			getActivity().finish();
 			return;
 		}
-		
+
 		mEntryDbHandler = new EntryDbHandler(getActivity());
-		
-		String stringId = getArguments().getString(ARG_ITEM_ID);
-		if(stringId != null)
-			mEntry = mEntryDbHandler.getFileSystemEntry(Integer.valueOf(stringId));
-		else {
+
+		mEntry = mEntryDbHandler.getFileSystemEntry(getArguments().getInt(ARG_ITEM_ID));
+		if(mEntry == null){
 			getActivity().finish();
 			return;
 		}
 
-		downloadServiceIntent = new Intent(getActivity(), DownloadService.class);
-		downloadServiceIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, ""+mEntry.getId());
+		downloadServiceIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, mEntry.getId());
 	}
-	
+
 
 	@Override
 	public void onStart() {
 
-		getActivity().getApplicationContext().bindService(downloadServiceIntent, mConnection, 0);
+		if(getActivity() != null)
+			getActivity().getApplicationContext().bindService(downloadServiceIntent, mConnection, 0);
 		super.onStart();
 	}
 
 	@Override
 	public void onStop() {
-        if (mBound) {
-        	getActivity().getApplicationContext().unbindService(mConnection);
-            mBound = false;
-        }
+		if (mBound) {
+			getActivity().getApplicationContext().unbindService(mConnection);
+			mBound = false;
+		}
 		super.onStop();
 	}
 
@@ -134,22 +136,20 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 
 		mapViews();
 
-		
+
 		if (mEntry != null) {
 			tv_name.setText(String.format(getResources().getString(R.string.detail_name), mEntry.getName()));
-			tv_size.setText(String.format(getResources().getString(R.string.detail_name), readableFileSize(mEntry.getSize())));
+			tv_size.setText(String.format(getResources().getString(R.string.detail_name), LazyAdapter.readableFileSize(mEntry.getSize())));
 			cb_syncSubscription.setChecked(mEntry.getSyncSubscribed());
+
+			FileInfoChecker fileInfoChecker = new FileInfoChecker();
+
+			tv_size.setText(fileInfoChecker.getStatus(mEntry, mEntryDbHandler.getPath(mEntry)).toString());
 
 		}
 
-		
+
 		return mView;
-	}
-	public static String readableFileSize(long size) {
-	    if(size <= 0) return "0";
-	    final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
-	    int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
-	    return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
 	}
 	@Override
 	public void onClick(View view) {
@@ -165,64 +165,64 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 			break;
 		}
 	}
-	
+
 	private void openFile() {
 
 		File file = new File(mEntryDbHandler.getPath(mEntry), mEntry.getName());
-	    if(file.exists()){
+		if(file.exists()){
 			Uri uri = Uri.fromFile(file);
-			
+
 
 			String mime = getMimeType(uri.toString());
-			
+
 			Intent intent = new Intent();
 			intent.setAction(android.content.Intent.ACTION_VIEW);
 			intent.setDataAndType(uri, mime);
 			startActivity(intent); 
-	    }
-		
+		}
+
 	}
-	
+
 	private String getMimeType(String url)
 	{
-	    String type = null;
-	    String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-	    if (extension != null) {
-	        MimeTypeMap mime = MimeTypeMap.getSingleton();
-	        type = mime.getMimeTypeFromExtension(extension);
-	    }
-	    return type;
+		String type = null;
+		String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+		if (extension != null) {
+			MimeTypeMap mime = MimeTypeMap.getSingleton();
+			type = mime.getMimeTypeFromExtension(extension);
+		}
+		return type;
 	}
 
 	/** Defines callbacks for service binding, passed to bindService() */
-    private ServiceConnection mConnection = new ServiceConnection() {
+	private ServiceConnection mConnection = new ServiceConnection() {
 
 
 		@Override
-        public void onServiceConnected(ComponentName className,
-                IBinder service) {
+		public void onServiceConnected(ComponentName className,
+				IBinder service) {
 
 			LocalBinder binder = (LocalBinder) service;
-            binder.setListener(ItemDetailFragment.this);
-            mService = binder.getService();
-            
-            mBound = true;
-    		onDownloadAdded();
-        }
+			binder.setListener(ItemDetailFragment.this);
+			mService = binder.getService();
 
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mService = null;
-            mBound = false;
-        }
-    };
+			mBound = true;
+			onDownloadAdded();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName arg0) {
+			mService = null;
+			mBound = false;
+		}
+	};
 
 	@Override
 	public void refreshProgress(FileSystemEntry entry, final Integer value) {
-		
+
 		if(entry.equals(mEntry) && getActivity() != null){
 			getActivity().runOnUiThread(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					if(downloadProgressBar == null){
@@ -239,14 +239,14 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 
 	@Override
 	public void onDownloadFinished(FileSystemEntry entry) {
-		
+
 		if(entry.equals(mEntry) && getActivity() != null) {
 			getActivity().runOnUiThread(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					downloadContainer.removeAllViews();
-					
+
 				}
 			});
 		}
@@ -256,14 +256,14 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 	public void onDownloadAdded(){
 		if(!mBound || !mService.isEntryInQueue(mEntry))
 			return;
-		
-		if(downloadProgressBar == null){
+
+		if(downloadProgressBar == null && getActivity() != null){
 			downloadContainer.removeAllViews();
 			downloadProgressBar = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleHorizontal);
 			downloadProgressBar.setIndeterminate(true);
 			downloadContainer.addView(downloadProgressBar);
-			
+
 		}
-		
+
 	}
 }

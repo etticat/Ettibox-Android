@@ -1,5 +1,6 @@
 package net.etticat.dokabox;
 
+import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
@@ -44,6 +45,8 @@ public class ItemListFragment extends SherlockListFragment {
 	 * activated item position. Only used on tablets.
 	 */
 	private static final String STATE_ACTIVATED_POSITION = "activated_position";
+
+	private static final String STATE_FOLDER_ID = "folder_id";
 
 	/**
 	 * The fragment's current callback object, which is notified of list item
@@ -105,6 +108,10 @@ public class ItemListFragment extends SherlockListFragment {
 		sharedPrefs = new SharedPrefs(getActivity());
 		webServiceConnection = new WebServiceConnection(getActivity());
 		
+		
+		
+		
+		
 	}
 	
 	@Override
@@ -126,10 +133,6 @@ public class ItemListFragment extends SherlockListFragment {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.action_refresh:
-			refresh();
-			break;
-
 		default:
 			break;
 		}
@@ -164,6 +167,11 @@ public class ItemListFragment extends SherlockListFragment {
 		}
 
 	}
+
+	public Integer getEntryId() {
+		return id;
+	}
+
 	public void setId(Integer id) {
 		this.id = id;
 	}
@@ -176,18 +184,18 @@ public class ItemListFragment extends SherlockListFragment {
 		mRefreshTask = new RefreshTask();
 		mRefreshTask.execute((Void) null);
 	}
-	
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
 		// Restore the previously serialized activated item position.
-		if (savedInstanceState != null
-				&& savedInstanceState.containsKey(STATE_ACTIVATED_POSITION)) {
+		if (savedInstanceState != null && savedInstanceState.containsKey(STATE_ACTIVATED_POSITION)) {
 			setActivatedPosition(savedInstanceState
 					.getInt(STATE_ACTIVATED_POSITION));
 		}
+		if (savedInstanceState != null && savedInstanceState.containsKey(STATE_FOLDER_ID)) 
+			id = savedInstanceState.getInt(STATE_FOLDER_ID);
 	}
 
 	@Override
@@ -225,10 +233,13 @@ public class ItemListFragment extends SherlockListFragment {
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
+		
 		if (mActivatedPosition != ListView.INVALID_POSITION) {
 			// Serialize and persist the activated item position.
 			outState.putInt(STATE_ACTIVATED_POSITION, mActivatedPosition);
 		}
+		outState.putInt(STATE_FOLDER_ID, id);
+		
 	}
 
 	/**
@@ -301,4 +312,5 @@ public class ItemListFragment extends SherlockListFragment {
 			mRefreshTask = null;
 		}
 	}
+	
 }

@@ -6,7 +6,7 @@
     android:padding="5dip" >
  
     <!--  ListRow Left sied Thumbnail image -->
-    <LinearLayout android:id="@+id/thumbnail"
+    <RelativeLayout android:id="@+id/thumbnail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="3dip"
@@ -16,54 +16,70 @@
         <ImageView
             android:id="@+id/list_image"
             android:layout_width="50dip"
+            android:contentDescription="@string/list_row_file_icon"
             android:layout_height="50dip"
-            android:src="@drawable/ic_launcher"/>
+            android:src="@drawable/ic_folder"/>
+
+        <ImageView
+            android:id="@+id/list_image_sync"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/list_image"
+            android:layout_alignRight="@+id/list_image"
+            android:contentDescription="@string/list_row_sync_icon"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            android:maxWidth="15dp"
+            android:layout_marginBottom="3dp"
+            android:layout_marginRight="1dp"
+            android:src="@drawable/issynce" />
  
-    </LinearLayout>
+    </RelativeLayout>
  
     <!-- Title Of Song-->
     <TextView
-        android:id="@+id/title" 
+        android:id="@+id/list_item_title" 
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/thumbnail"
         android:layout_toRightOf="@+id/thumbnail"
-        android:text="Rihanna Love the way lie"
+        android:text="@string/list_row_file_titel_predefined"
         android:textColor="#040404"
         android:typeface="sans"
-        android:textSize="15dip"
+        android:textSize="15sp"
         android:textStyle="bold"/>
  
     <!-- Artist Name -->
     <TextView
-        android:id="@+id/artist"
+        android:id="@+id/list_item_date"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/title"
+        android:layout_below="@id/list_item_title"
         android:textColor="#343434"
-        android:textSize="10dip"
+        android:textSize="12sp"
         android:layout_marginTop="1dip"
         android:layout_toRightOf="@+id/thumbnail"
-        android:text="Just gona stand there and ..." />
+        android:text="@string/list_row_file_date_predefined" />
  
     <!-- Rightend Duration -->
-    <TextView
-        android:id="@+id/duration"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@id/title"
-        android:gravity="right"
-        android:text="5:45"
-        android:layout_marginRight="5dip"
-        android:textSize="10dip"
-        android:textColor="#10bcc9"
-        android:textStyle="bold"/>
  
      <!-- Rightend Arrow -->
      <ImageView android:layout_width="wrap_content"
+        android:contentDescription="@string/list_row_arrow_right"
         android:layout_height="wrap_content"
+        android:src="@drawable/arrow"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"/>
+
+     <TextView
+         android:id="@+id/list_item_size"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentTop="true"
+         android:layout_alignRight="@+id/list_item_date"
+         android:gravity="right"
+         android:textColor="#10bcc9"
+         android:textSize="12sp"
+         android:textStyle="bold" />
  
 </RelativeLayout>

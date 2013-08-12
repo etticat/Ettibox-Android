@@ -42,10 +42,12 @@
 
         <service android:name="net.etticat.dokabox.DownloadService" >
         </service>
+        <service android:name="net.etticat.dokabox.UploadService" >
+        </service>
 
+<!--             android:theme="@android:style/Theme.DeviceDefault.Light.Dialog" -->
         <activity
             android:name="net.etticat.dokabox.UploadActivity"
-            android:theme="@android:style/Theme.DeviceDefault.Light.Dialog"
             android:excludeFromRecents="true"
             android:label="@string/title_activity_upload" >
             <intent-filter>

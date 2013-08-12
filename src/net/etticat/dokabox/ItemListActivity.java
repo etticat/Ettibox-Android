@@ -1,6 +1,7 @@
 package net.etticat.dokabox;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -42,24 +43,20 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
 		setContentView(R.layout.activity_item_list);
+		
+
 		
 		sharedPrefs = new SharedPrefs(this);
 		
-		itemListFragment = new ItemListFragment();		
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.fragment_container, itemListFragment).commit();
 		
 		if(sharedPrefs.getUsername() == ""){
 			Intent intent = new Intent(this, LoginActivity.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			startActivity(intent);
 		}
-
-		String stringId = getIntent().getStringExtra(ItemDetailFragment.ARG_ITEM_ID);
-		if(stringId != null)
-			itemListFragment.setId(Integer.valueOf(stringId));
-
+		
 		if (findViewById(R.id.item_detail_container) != null) {
 			// The detail container view will be present only in the
 			// large-screen layouts (res/values-large and
@@ -73,10 +70,24 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 			//T
 			// itemListFragment.setActivateOnItemClick(true);
 		}
+		
+		if(savedInstanceState != null)
+			return;
+
+		itemListFragment = new ItemListFragment();		
+		getSupportFragmentManager().beginTransaction()
+		.replace(R.id.fragment_container, itemListFragment).commit();
+		Bundle extras = getIntent().getExtras();
+		
+		if (extras != null && extras.containsKey(ItemDetailFragment.ARG_ITEM_ID)) {
+			itemListFragment.setId(extras.getInt(ItemDetailFragment.ARG_ITEM_ID));
+		}
+
+
 
 //		TESTING
 //		Intent detailIntent = new Intent(this, UploadActivity.class);
-//		detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, "" + 24601);
+//		detailIntent.setData(Uri.parse("/storage/emulated/0/dokabox/24599/Lukas Kamleitner/Bilder/_DSC0072.JPG"));
 //		startActivity(detailIntent);
 //		TESTING
 		
@@ -113,7 +124,7 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 			// adding or replacing the detail fragment using a
 			// fragment transaction.
 			Bundle arguments = new Bundle();
-			arguments.putString(ItemDetailFragment.ARG_ITEM_ID, "" +item.getId());
+			arguments.putInt(ItemDetailFragment.ARG_ITEM_ID, item.getId());
 			
 			ItemDetailFragment fragment = new ItemDetailFragment();
 			fragment.setArguments(arguments);
@@ -124,7 +135,7 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 			// In single-pane mode, simply start the detail activity
 			// for the selected item ID.
 			Intent detailIntent = new Intent(this, ItemDetailActivity.class);
-			detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, "" + item.getId());
+			detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getId());
 			startActivity(detailIntent);
 		}
 	}

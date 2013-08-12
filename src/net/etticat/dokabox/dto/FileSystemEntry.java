@@ -2,6 +2,8 @@ package net.etticat.dokabox.dto;
 
 import java.util.Date;
 
+import android.net.Uri;
+
 public class FileSystemEntry {
 
 	public enum FileSystemEntryType {
@@ -12,9 +14,33 @@ public class FileSystemEntry {
 	private String name;
 	private FileSystemEntryType type;
 	private Date alternationDate;
+	private Date downloadedAlternationDate;
+	private Date downloadedDate;
+	public Date getDownloadedAlternationDate() {
+		return downloadedAlternationDate;
+	}
+	public void setDownloadedAlternationDate(Date downloadedAlternationDate) {
+		this.downloadedAlternationDate = downloadedAlternationDate;
+	}
+	public Date getDownloadedDate() {
+		return downloadedDate;
+	}
+	public void setDownloadedDate(Date downloadedDate) {
+		this.downloadedDate = downloadedDate;
+	}
 	private int parentId;
 	private Boolean active;
 	private Boolean syncSubscribed;
+	private Uri uri;
+	
+	
+	
+	public Uri getUri() {
+		return uri;
+	}
+	public void setUri(Uri uri) {
+		this.uri = uri;
+	}
 	private long size;
 	
 	public long getSize() {
