@@ -45,24 +45,41 @@
         <service android:name="net.etticat.dokabox.UploadService" >
         </service>
 
-<!--             android:theme="@android:style/Theme.DeviceDefault.Light.Dialog" -->
         <activity
             android:name="net.etticat.dokabox.UploadActivity"
             android:excludeFromRecents="true"
             android:label="@string/title_activity_upload" >
             <intent-filter>
-			    <action android:name="android.intent.action.VIEW" />
-			    <category android:name="android.intent.category.DEFAULT"/>
- 			    <data android:scheme="file" />
-			    <data android:mimeType="application/*" />
-			    <data android:mimeType="audio/*" />
-			    <data android:mimeType="image/*" />
-			    <data android:mimeType="message/*" />
-			    <data android:mimeType="multipart/*" />
-			    <data android:mimeType="text/*" />
-			    <data android:mimeType="video/*" />
-			</intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:mimeType="application/*" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="message/*" />
+                <data android:mimeType="multipart/*" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
         </activity>
+        <activity
+            android:name=".SearchActivity"
+            android:launchMode="singleTop" >
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
+        </activity>
+            <meta-data android:name="android.app.default_searchable"
+                    android:value=".SearchActivity" />
     </application>
 
 </manifest>

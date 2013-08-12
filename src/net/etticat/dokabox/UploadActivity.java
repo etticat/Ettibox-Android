@@ -166,4 +166,10 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 		
 	}
 
+	@Override
+	public void setFragment(ItemListFragment itemListFragment) {
+		currentItemListFragment = itemListFragment;
+		
+	}
+
 }

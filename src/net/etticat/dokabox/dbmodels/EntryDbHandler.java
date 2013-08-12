@@ -39,8 +39,6 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 	private static final String KEY_DOWNLOAD_DATE = "downloadedDate";
 	private static final String KEY_DOWNLOAD_ALTERNATION_DATE = "downloadedAlternationDate";
 
-	private static final String TAG = "EntryDbHandler";
-
 	public EntryDbHandler(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
@@ -251,6 +249,40 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 			entry = getFileSystemEntry(entry.getParentId());
 		}
 		return entry;
+	}
+
+	public List<FileSystemEntry> getEntriesBySearchQuery(String searchQuery) {
+		List<FileSystemEntry> result = new ArrayList<FileSystemEntry>();
+
+		SQLiteDatabase db = this.getReadableDatabase();
+
+		Cursor cursor = db.query(TABLE_ENTRIES, new String[] { KEY_ID,
+				KEY_NAME, KEY_TYPE, KEY_ALTERNATION_DATE, KEY_PARENT_ID, KEY_ACTIVE, 
+				KEY_SYNC_SUBSCRIBED, KEY_SIZE, KEY_DOWNLOAD_DATE, KEY_DOWNLOAD_ALTERNATION_DATE}, KEY_NAME + " LIKE ?",
+				new String[] { "%" + searchQuery + "%" }, null, null, KEY_TYPE + " ASC");
+
+		if (cursor != null){
+			if (cursor.moveToFirst()) {
+				do {
+					FileSystemEntry entry = new FileSystemEntry();
+					entry.setId(cursor.getInt(0));
+					entry.setName(cursor.getString(1));
+					entry.setIntegerType(cursor.getInt(2));
+					entry.setAlternationDate(new Date(cursor.getLong(3)));
+					entry.setParentId(cursor.getInt(4));
+					entry.setActive(cursor.getInt(5) == 1);
+					entry.setSyncSubscribed(cursor.getInt(6) == 1);
+					entry.setSize(cursor.getInt(7));
+					entry.setDownloadedDate(new Date(cursor.getLong(8)));
+					entry.setDownloadedAlternationDate(new Date(cursor.getLong(9)));
+
+
+					// Adding entry to list
+					result.add(entry);
+				} while (cursor.moveToNext());
+			}
+		}
+		return result;
 	}
 
 }

@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
@@ -54,6 +55,8 @@ public class ItemListFragment extends SherlockListFragment {
 	 */
 	private Callbacks mCallbacks = sDummyCallbacks;
 
+	protected List<FileSystemEntry> entries;
+
 	/**
 	 * The current activated item position. Only used on tablets.
 	 */
@@ -69,15 +72,16 @@ public class ItemListFragment extends SherlockListFragment {
 		 * Callback for when an item has been selected.
 		 */
 		public void onItemSelected(FileSystemEntry item);
+		public void setFragment(ItemListFragment itemListFragment);
 	}
 	
-	private EntryDbHandler entryDbHandler;
+	protected EntryDbHandler entryDbHandler;
 	private Integer id = 0;
 	private RefreshTask mRefreshTask;
 	private SharedPrefs sharedPrefs;
 	private LazyAdapter mLazyAdapter;
 	
-	private PullToRefreshListView mPullToRefreshListView;
+	protected PullToRefreshListView mPullToRefreshListView;
 
 	public WebServiceConnection webServiceConnection;
 
@@ -88,6 +92,10 @@ public class ItemListFragment extends SherlockListFragment {
 	private static Callbacks sDummyCallbacks = new Callbacks() {
 		@Override
 		public void onItemSelected(FileSystemEntry item) {
+		}
+
+		@Override
+		public void setFragment(ItemListFragment itemListFragment) {			
 		}
 	};
 
@@ -117,8 +125,11 @@ public class ItemListFragment extends SherlockListFragment {
 	@Override
 	public void onResume() {
 
-		refreshListView(entryDbHandler.getEntries(id));
+		mCallbacks.setFragment(this);
+		entries = entryDbHandler.getEntries(id);
+		refreshListView();
 		refresh();
+
 		
 		super.onResume();
 	}
@@ -159,12 +170,18 @@ public class ItemListFragment extends SherlockListFragment {
 	        return mPullToRefreshListView;
 	}
 
-	private void refreshListView(List<FileSystemEntry> entries){
+	protected void refreshListView(){
 		Context activity = getActivity();
-		if(activity != null){ 
+		if(activity == null)
+			return;
+//		if(mLazyAdapter == null){
 			mLazyAdapter = new LazyAdapter(activity, entries);
 			setListAdapter(mLazyAdapter);
-		}
+//		}
+//		else {
+//			mLazyAdapter.notifyDataSetChanged();
+
+//		}
 
 	}
 
@@ -209,6 +226,9 @@ public class ItemListFragment extends SherlockListFragment {
 		}
 
 		mCallbacks = (Callbacks) activity;
+		
+		// Probably useless TODO check
+		mCallbacks.setFragment(this);
 	}
 
 	@Override
@@ -229,6 +249,7 @@ public class ItemListFragment extends SherlockListFragment {
 		
 		mCallbacks.onItemSelected(mLazyAdapter.getItem(position-1));
 	}
+	
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
@@ -273,7 +294,6 @@ public class ItemListFragment extends SherlockListFragment {
 		String uuid;
 		String user;
 		String accessToken;
-		List<FileSystemEntry> entries;
 		
 		@Override
 		protected void onPreExecute() {
@@ -300,7 +320,7 @@ public class ItemListFragment extends SherlockListFragment {
 			mRefreshTask = null;
 
 			if (success) {
-				refreshListView(entries);
+				refreshListView();
 				entryDbHandler.replaceEntries(entries, id);
 				
 			} 

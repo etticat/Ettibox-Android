@@ -1,12 +1,18 @@
 package net.etticat.dokabox;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.widget.SearchView;
 
 import net.etticat.dokabox.dto.FileSystemEntry;
 import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
@@ -30,13 +36,23 @@ import net.etticat.dokabox.models.SharedPrefs;
  * interface to listen for item selections.
  */
 public class ItemListActivity extends SherlockFragmentActivity implements
-		ItemListFragment.Callbacks {
+		ItemListFragment.Callbacks, SearchView.OnQueryTextListener{
 
 	/**
 	 * Whether or not the activity is in two-pane mode, i.e. running on a tablet
 	 * device.
 	 */
+	
 	private SharedPrefs sharedPrefs;
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getSupportMenuInflater().inflate(R.menu.item_list, menu); 
+        MenuItem searchItem = menu.findItem(R.id.search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setOnQueryTextListener(this);
+		return super.onCreateOptionsMenu(menu);
+	}
+
 	private boolean mTwoPane; 
 	ItemListFragment itemListFragment;
 
@@ -66,7 +82,7 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 
 			// In two-pane mode, list items should be given the
 			// 'activated' state when touched.
-			
+			 
 			//T
 			// itemListFragment.setActivateOnItemClick(true);
 		}
@@ -82,17 +98,6 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 		if (extras != null && extras.containsKey(ItemDetailFragment.ARG_ITEM_ID)) {
 			itemListFragment.setId(extras.getInt(ItemDetailFragment.ARG_ITEM_ID));
 		}
-
-
-
-//		TESTING
-//		Intent detailIntent = new Intent(this, UploadActivity.class);
-//		detailIntent.setData(Uri.parse("/storage/emulated/0/dokabox/24599/Lukas Kamleitner/Bilder/_DSC0072.JPG"));
-//		startActivity(detailIntent);
-//		TESTING
-		
-		
-		// TODO: If exposing deep links into your app, handle intents here.
 	}
 
 	/**
@@ -138,5 +143,36 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 			detailIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, item.getId());
 			startActivity(detailIntent);
 		}
+	}
+
+	@Override
+	public boolean onQueryTextSubmit(String query) {
+
+		return false;
+	}
+
+	@Override
+	public boolean onQueryTextChange(String newText) { 
+		if(newText.equals("")) return false;
+		
+		if(!(itemListFragment instanceof SearchListFragment)){
+			
+			itemListFragment = new SearchListFragment();
+			
+			FragmentManager fm = getSupportFragmentManager();
+			FragmentTransaction ft = fm.beginTransaction();
+			ft.replace(R.id.fragment_container, itemListFragment, "search");
+			ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+			ft.addToBackStack("search");
+			ft.commit();
+		}
+		((SearchListFragment) itemListFragment).setSearchQuery(newText);
+		return false;
+	}
+
+	@Override
+	public void setFragment(ItemListFragment itemListFragment) {
+		this.itemListFragment = itemListFragment;
+		
 	}
 }
