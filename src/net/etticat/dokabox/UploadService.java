@@ -1,48 +1,21 @@
 package net.etticat.dokabox;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
-import java.util.Random;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-
-
+import net.etticat.dokabox.dbmodels.EntryDbHandler;
+import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.dokabox.models.WebServiceConnection;
+import net.etticat.dokabox.models.WebServiceConnection.OnUploadProgressHandler;
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ClipData.Item;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.widget.Toast;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.models.WebServiceConnection;
-import net.etticat.dokabox.models.WebServiceConnection.OnFileTransferProgressHandler;
-import net.etticat.dokabox.models.WebServiceConnection.OnUploadProgressHandler;
 
 public class UploadService  extends Service implements OnUploadProgressHandler{
 
@@ -55,10 +28,11 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 	public boolean bound = false;
 	private Thread thread;
 	private EntryDbHandler entryDbConnection;
-	private NotificationManager mNotificationManager;
 	private NotificationCompat.Builder mBuilder;
 	private Notification mNotification;
 	private WebServiceConnection webServiceConnection;
+	private Handler handler;
+	private Boolean isThreadRunning = false;
 
 
 	private Queue<FileSystemEntry> uploadQueue;
@@ -101,17 +75,20 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 	public interface BoundUploadServiceListener {
 		public void onUploadStarted(FileSystemEntry entry);
 		public Boolean onUploadError(FileSystemEntry entry, String message);
+		public void onUploadFinished(FileSystemEntry entry, Boolean success);
 	}
 
 
 	@Override
 	public void onCreate() {
 
-		webServiceConnection = new WebServiceConnection(getApplicationContext());
+		webServiceConnection = new WebServiceConnection();
 		uploadQueue = new LinkedList<FileSystemEntry>();
 
-		entryDbConnection = new EntryDbHandler(getApplicationContext());
+		entryDbConnection = EntryDbHandler.getInstance();
 		showNotification();
+
+		handler = new Handler();
 
 		thread = new Thread(new Runnable() {
 
@@ -119,11 +96,6 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 			@Override
 			public void run() {
 
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
 				while(true){
 					actualUploadItem = uploadQueue.poll();
 					if(actualUploadItem == null)
@@ -137,17 +109,24 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 					if (Environment.MEDIA_MOUNTED.equals(state)) {
 
 						webServiceConnection.uploadFile(actualUploadItem, UploadService.this);
+						
+						if(mListener != null)
+							mListener.onUploadFinished(actualUploadItem, true);
 					}
 
 				}
-				UploadService.this.stopSelf();
+				handler.post(new Runnable() {
+					
+					@Override
+					public void run() {
+						stopSelf();
+					}
+				});
 				showEndNotification();
 
 			}
 
 		});
-		thread.start();
-
 		super.onCreate();
 	}
 
@@ -161,11 +140,17 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 		uri  = intent.getData();
 
 		FileSystemEntry entry = entryDbConnection.getFileSystemEntry(id);
-		entry.setUri(uri);
-
-		if(entry != null)
+		
+		if(entry != null){
+			entry.setUri(uri);
 			uploadQueue.add(entry);
+		}
 
+		if(!isThreadRunning){
+			thread.start();
+			isThreadRunning = true;
+		}
+		
 		return super.onStartCommand(intent, flags, startId);
 	}
 
@@ -175,10 +160,6 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 		super.onDestroy();
 	}
 	private void showNotification(){
-
-		mNotificationManager =
-				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
 		mBuilder = new NotificationCompat.Builder(this);
 		mBuilder.setContentTitle(getText(R.string.upload_service_notification_title))
 		.setContentText(getText(R.string.upload_service_notification_message))
@@ -198,7 +179,7 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 	}
 
 	private void showEndNotification() {
-		// TODO Notification when Download is finished
+		// TODO Notification when Upload is finished
 
 	}
 
@@ -214,5 +195,13 @@ public class UploadService  extends Service implements OnUploadProgressHandler{
 		if(bound && mListener != null)
 			mListener.onUploadError(actualUploadItem, message);
 		
+	}
+
+	@Override
+	public void progressChanged(FileSystemEntry entry, Integer percent) {
+
+		mBuilder.setProgress(100, percent, false);
+
+		startForeground(ONGOING_NOTIFICATION_ID, mBuilder.build());	
 	}
 }

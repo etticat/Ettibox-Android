@@ -1,14 +1,13 @@
 package net.etticat.dokabox.models;
 
 import java.io.File;
-import java.util.Date;
 
 import net.etticat.dokabox.dto.FileSystemEntry;
 
 public class FileInfoChecker {
 
 	public enum FileInfoStatus{
-		CURRENT, OLD_VERSION, NOT_EXISTENT
+		CURRENT, OLD_VERSION, NOT_EXISTENT, DOWNLOADING
 	}
 	
 	public FileInfoStatus getStatus(FileSystemEntry entry, File file){

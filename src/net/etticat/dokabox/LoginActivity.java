@@ -8,18 +8,14 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.SuppressLint;
 
 import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.internal.nineoldandroids.animation.Animator;
 import com.actionbarsherlock.view.Menu;
 
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 
 import net.etticat.dokabox.dto.UserData;
-import net.etticat.dokabox.models.SharedPrefs;
 import net.etticat.dokabox.models.WebServiceConnection;
 
 
@@ -33,9 +29,7 @@ public class LoginActivity extends SherlockActivity {
 	/**
 	 * The default email to populate the email field with.
 	 */
-	public static final String EXTRA_EMAIL = "com.example.android.authenticatordemo.extra.EMAIL";
-	
-	SharedPrefs sharedPrefs;
+	public static final String EXTRA_EMAIL = "net.etticat.dokabox.extra.EMAIL";
 
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.
@@ -53,7 +47,7 @@ public class LoginActivity extends SherlockActivity {
 	private View mLoginStatusView;
 	private TextView mLoginStatusMessageView;
 	
-	private WebServiceConnection webServiceConnection;
+	private WebServiceConnection mWebServiceConnection;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +55,7 @@ public class LoginActivity extends SherlockActivity {
 
 		setContentView(R.layout.activity_login);
 		
-		webServiceConnection = new WebServiceConnection(this);
-		sharedPrefs = new SharedPrefs(this);
+		mWebServiceConnection = new WebServiceConnection();
 
 		// Set up the login form.
 		mEmail = getIntent().getStringExtra(EXTRA_EMAIL);
@@ -159,40 +152,14 @@ public class LoginActivity extends SherlockActivity {
 	/**
 	 * Shows the progress UI and hides the login form.
 	 */
-	@SuppressLint("NewApi")
 	private void showProgress(final boolean show) {
 		// On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
 		// for very easy animations. If available, use these APIs to fade-in
 		// the progress spinner.
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-			int shortAnimTime = getResources().getInteger(
-					android.R.integer.config_shortAnimTime);
-
+	
 			// TODO FIX LOGIN ANIMATION
-			/*
-			mLoginStatusView.setVisibility(View.VISIBLE);
-			mLoginStatusView.animate().setDuration(shortAnimTime)
-					.alpha(show ? 1 : 0)
-					.setListener(new AnimatorListenerAdapter() {
-						@Override
-						public void onAnimationEnd(Animator animation) {
-							mLoginStatusView.setVisibility(show ? View.VISIBLE
-									: View.GONE);
-						}
-					});
-
-			mLoginFormView.setVisibility(View.VISIBLE);
-			mLoginFormView.animate().setDuration(shortAnimTime)
-					.alpha(show ? 0 : 1)
-					.setListener(new AnimatorListenerAdapter() {
-						@Override
-						public void onAnimationEnd(Animator animation) {
-							mLoginFormView.setVisibility(show ? View.GONE
-									: View.VISIBLE);
-						}
-					});
-					
-					*/
+				
 		} else {
 			// The ViewPropertyAnimator APIs are not available, so simply show
 			// and hide the relevant UI components.
@@ -207,25 +174,21 @@ public class LoginActivity extends SherlockActivity {
 	 */
 	public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 		
-		String uuid;
-		UserData userData;
+		private UserData userData;
 		
 		@Override
 		protected void onPreExecute() {
-			uuid = sharedPrefs.getUuid();
-			
 			super.onPreExecute();
 		}
 		
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			
-			userData = webServiceConnection.login(mEmail, mPassword);
+			userData = mWebServiceConnection.login(mEmail, mPassword);
 			
 			if (userData.getName() != null) {			
 				return true;
 			}
-
 			return false;
 		}
 
@@ -238,7 +201,7 @@ public class LoginActivity extends SherlockActivity {
 			if (success) {
 				Intent intent = new Intent(LoginActivity.this, ItemListActivity.class);
 				//TODO Testen
-//				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				startActivity(intent);
 				finish();
 			} else {

@@ -1,74 +1,70 @@
 package net.etticat.dokabox.models;
 
 
-import java.util.Date;
 import java.util.UUID;
 
-import android.R.string;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class SharedPrefs {
+public class SharedPrefs extends ContextProvider{
 
 	private static final String PREFS_NAME = "Dokabox";
-	private Context context;
+	
+	private static final String PREFS_KEY_USERNAME = "username";
+	private static final String PREFS_KEY_ACCESS_TOKEN = "accessToken";
+	private static final String PREFS_KEY_ENCRYPTED_PASSWORD = "encryptedPassword";
+	private static final String PREFS_KEY_UUID = "uuid";
+	
+	private static SharedPreferences sSharedPreferences = null;
 
-    public SharedPrefs(Context context) {
-		this.context = context;
+	private SharedPrefs(){}
+	
+	private static SharedPreferences getSharedPreferences(){
+		if (sSharedPreferences == null){
+			sSharedPreferences = sContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		}
+		return sSharedPreferences;
 	}
-    
-	public String getUsername() {
-	       SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-	       return settings.getString("username", "");
-	}
-
-	public void setUsername(String username){
-
-	      SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-	      SharedPreferences.Editor editor = settings.edit();
-	      editor.putString("username", username);
+	private static void editValue(String key, String value){
+	      SharedPreferences.Editor editor = getSharedPreferences().edit();
+	      editor.putString(key, value);
 	      editor.commit();
 	}
+	public static String getUsername() {
+	       return getSharedPreferences().getString(PREFS_KEY_USERNAME, "");
+	}
 
-	public String getAccessToken() {
-		SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-		return settings.getString("accessToken", null);
+	public static void setUsername(String username){
+		editValue(PREFS_KEY_USERNAME, username);
+	}
+
+	public static String getAccessToken() {
+	       return getSharedPreferences().getString(PREFS_KEY_ACCESS_TOKEN, "");
 	}
 	
-	public void setAccessToken(String username){
-		SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putString("accessToken", username);
-		editor.commit();
+	public static void setAccessToken(String accessToken){
+		editValue(PREFS_KEY_ACCESS_TOKEN, accessToken);
 	}
 	
-	public String getEncryptedPassword() {
-		SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-		return settings.getString("encryptedPassword", null);
+	public static String getEncryptedPassword() {
+	       return getSharedPreferences().getString(PREFS_KEY_ENCRYPTED_PASSWORD, "");
 	}
 	
-	public void setEncryptedPassword(String encryptedPassword){
-		SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putString("encryptedPassword", encryptedPassword);
-		editor.commit();
+	public static void setEncryptedPassword(String encryptedPassword){
+		editValue(PREFS_KEY_ENCRYPTED_PASSWORD, encryptedPassword);
 	}
-	public String getUuid() {
-		SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-		String uuid = settings.getString("uuid", "");
-		if(uuid == "")
+	public static String getUuid() {
+		String uuid = getSharedPreferences().getString(PREFS_KEY_UUID, "");
+		if(uuid == ""){
 			uuid = UUID.randomUUID().toString();
-		
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putString("uuid", uuid);
-		editor.commit();
+			editValue(PREFS_KEY_UUID, uuid);
+		}
 		return uuid;
 	}
 	
 
     public void clear() {
-        SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-        SharedPreferences.Editor editor = settings.edit();
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.clear();
         editor.commit();
     }

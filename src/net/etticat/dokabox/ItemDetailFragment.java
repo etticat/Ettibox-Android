@@ -1,8 +1,14 @@
 package net.etticat.dokabox;
 
 import java.io.File;
-import java.text.DecimalFormat;
 
+import net.etticat.dokabox.DownloadService.BoundDownloadServiceListener;
+import net.etticat.dokabox.DownloadService.LocalBinder;
+import net.etticat.dokabox.dbmodels.EntryDbHandler;
+import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.dokabox.models.FileInfoChecker;
+import net.etticat.dokabox.models.FileInfoChecker.FileInfoStatus;
+import net.etticat.dokabox.models.LazyAdapter;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -15,24 +21,11 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
 
-
-
-
-
-import net.etticat.dokabox.DownloadService.BoundDownloadServiceListener;
-import net.etticat.dokabox.DownloadService.LocalBinder;
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.models.FileInfoChecker;
-import net.etticat.dokabox.models.LazyAdapter;
-import net.etticat.dokabox.models.FileInfoChecker.FileInfoStatus;
 /**
  * A fragment representing a single Item detail screen. This fragment is either
  * contained in a {@link ItemListActivity} in two-pane mode (on tablets) or a
@@ -48,47 +41,40 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 
 	private FileSystemEntry mEntry;
 
-	private TextView tv_name;
-	private TextView tv_size;
-	private CheckBox cb_syncSubscription;
-	private Button bt_download;
-	private Button bt_open;
-
+	private TextView mTvName;
+	private TextView mTvSize;
+	private Button mBtDownload;
+	private Button mBtOpen;
+	private ProgressBar mDownloadProgressBar;
 
 	private View mView;
-	FrameLayout downloadContainer;
 
 	private DownloadService mService = null;
 	private Boolean mBound = false;
 
-	private ProgressBar downloadProgressBar;
-	private Intent downloadServiceIntent;
-
-
-	/**
-	 * The dummy content this fragment is presenting.
-	 */
-
+	private Intent mDownloadServiceIntent;
+	private FileInfoStatus mStatus;
 
 	/**
 	 * Mandatory empty constructor for the fragment manager to instantiate the
 	 * fragment (e.g. upon screen orientation changes).
 	 */
 	public ItemDetailFragment() {
+		
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		downloadServiceIntent = new Intent(getActivity(), DownloadService.class);
+		mDownloadServiceIntent = new Intent(getActivity(), DownloadService.class);
 
 		if (!getArguments().containsKey(ARG_ITEM_ID)) {
 			getActivity().finish();
 			return;
 		}
 
-		mEntryDbHandler = new EntryDbHandler(getActivity());
+		mEntryDbHandler = EntryDbHandler.getInstance();
 
 		mEntry = mEntryDbHandler.getFileSystemEntry(getArguments().getInt(ARG_ITEM_ID));
 		if(mEntry == null){
@@ -96,7 +82,7 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 			return;
 		}
 
-		downloadServiceIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, mEntry.getId());
+		mDownloadServiceIntent.putExtra(ItemDetailFragment.ARG_ITEM_ID, mEntry.getId());
 	}
 
 
@@ -104,7 +90,7 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 	public void onStart() {
 
 		if(getActivity() != null)
-			getActivity().getApplicationContext().bindService(downloadServiceIntent, mConnection, 0);
+			getActivity().getApplicationContext().bindService(mDownloadServiceIntent, mConnection, 0);
 		super.onStart();
 	}
 
@@ -118,14 +104,13 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 	}
 
 	private void mapViews() {
-		tv_name = (TextView) mView.findViewById(R.id.tv_detail_name);
-		tv_size = (TextView) mView.findViewById(R.id.tv_detail_size);
-		cb_syncSubscription = (CheckBox) mView.findViewById(R.id.cb_detail_sync_subscription);
-		bt_download = (Button) mView.findViewById(R.id.bt_detail_download);
-		bt_download.setOnClickListener(this);
-		bt_open = (Button) mView.findViewById(R.id.bt_detail_open);
-		bt_open.setOnClickListener(this);
-		downloadContainer = (FrameLayout) mView.findViewById(R.id.download_container);
+		mTvName = (TextView) mView.findViewById(R.id.tv_detail_name);
+		mTvSize = (TextView) mView.findViewById(R.id.tv_detail_size);
+		mBtDownload = (Button) mView.findViewById(R.id.bt_detail_download);
+		mBtDownload.setOnClickListener(this);
+		mDownloadProgressBar = (ProgressBar) mView.findViewById(R.id.pb_detail_download_progress);
+		mBtOpen = (Button) mView.findViewById(R.id.bt_detail_open);
+		mBtOpen.setOnClickListener(this);
 	}
 
 	@Override
@@ -138,24 +123,56 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 
 
 		if (mEntry != null) {
-			tv_name.setText(String.format(getResources().getString(R.string.detail_name), mEntry.getName()));
-			tv_size.setText(String.format(getResources().getString(R.string.detail_name), LazyAdapter.readableFileSize(mEntry.getSize())));
-			cb_syncSubscription.setChecked(mEntry.getSyncSubscribed());
+			mTvName.setText(String.format(getResources().getString(R.string.detail_name), mEntry.getName()));
+			mTvSize.setText(String.format(getResources().getString(R.string.detail_name), LazyAdapter.readableFileSize(mEntry.getSize())));
 
 			FileInfoChecker fileInfoChecker = new FileInfoChecker();
 
-			tv_size.setText(fileInfoChecker.getStatus(mEntry, mEntryDbHandler.getPath(mEntry)).toString());
+			mStatus = fileInfoChecker.getStatus(mEntry, mEntryDbHandler.getPath(mEntry));
+			reloadStatus();
 
 		}
 
 
 		return mView;
 	}
+	private void reloadStatus() {
+		switch (mStatus) {
+		case NOT_EXISTENT:
+			mDownloadProgressBar.setVisibility(View.GONE);
+			mBtOpen.setVisibility(View.GONE);
+			mBtDownload.setVisibility(View.VISIBLE);
+			break;
+		case OLD_VERSION:
+			mDownloadProgressBar.setVisibility(View.GONE);
+			mBtOpen.setVisibility(View.VISIBLE);
+			mBtDownload.setVisibility(View.VISIBLE);
+			
+			break;
+		case CURRENT:
+			mDownloadProgressBar.setVisibility(View.GONE);
+			mBtOpen.setVisibility(View.VISIBLE);
+			mBtDownload.setVisibility(View.GONE);
+			
+			break;
+		case DOWNLOADING:
+			mDownloadProgressBar.setVisibility(View.VISIBLE);
+			mBtOpen.setVisibility(View.GONE);
+			mBtDownload.setVisibility(View.GONE);
+			
+			break;
+		default:
+			break;
+		}
+		
+	}
+
 	@Override
 	public void onClick(View view) {
 		switch (view.getId()) {
 		case R.id.bt_detail_download:
-			getActivity().startService(downloadServiceIntent);
+			getActivity().startService(mDownloadServiceIntent);
+			getActivity().getApplicationContext().bindService(mDownloadServiceIntent, mConnection, 0);
 			onDownloadAdded();
 			break;
 		case R.id.bt_detail_open:
@@ -169,9 +186,9 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 	private void openFile() {
 
 		File file = new File(mEntryDbHandler.getPath(mEntry), mEntry.getName());
+		
 		if(file.exists()){
 			Uri uri = Uri.fromFile(file);
-
 
 			String mime = getMimeType(uri.toString());
 
@@ -214,6 +231,8 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 		public void onServiceDisconnected(ComponentName arg0) {
 			mService = null;
 			mBound = false;
+			
+			
 		}
 	};
 
@@ -225,13 +244,10 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 
 				@Override
 				public void run() {
-					if(downloadProgressBar == null){
-						onDownloadAdded();
-					}
-					if(downloadProgressBar != null){
-						downloadProgressBar.setIndeterminate(false);
-						downloadProgressBar.setProgress(value);
-					}
+
+						mDownloadProgressBar.setIndeterminate(false);
+						mDownloadProgressBar.setProgress(value);
+					
 				}
 			});
 		}
@@ -245,7 +261,8 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 
 				@Override
 				public void run() {
-					downloadContainer.removeAllViews();
+					mStatus = FileInfoStatus.CURRENT;
+						reloadStatus();
 
 				}
 			});
@@ -257,13 +274,27 @@ public class ItemDetailFragment extends SherlockFragment implements OnClickListe
 		if(!mBound || !mService.isEntryInQueue(mEntry))
 			return;
 
-		if(downloadProgressBar == null && getActivity() != null){
-			downloadContainer.removeAllViews();
-			downloadProgressBar = new ProgressBar(getActivity(), null, android.R.attr.progressBarStyleHorizontal);
-			downloadProgressBar.setIndeterminate(true);
-			downloadContainer.addView(downloadProgressBar);
-
+		if(getActivity() != null){
+			
+			mStatus = FileInfoStatus.DOWNLOADING;
+			reloadStatus();
 		}
 
+	}
+
+	@Override
+	public void onDownloadFailed(FileSystemEntry entry) {
+		
+		if(entry.equals(mEntry) && getActivity() != null) {
+			getActivity().runOnUiThread(new Runnable() {
+
+				@Override
+				public void run() {
+					mStatus = FileInfoStatus.NOT_EXISTENT;
+					reloadStatus();
+
+				}
+			});
+		}
 	}
 }

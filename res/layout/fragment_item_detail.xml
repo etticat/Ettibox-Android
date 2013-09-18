@@ -15,9 +15,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-			android:scaleX="0.8"            
-			android:scaleY="0.8"            
             android:contentDescription="@string/detail_preview_picture_description"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
             android:src="@drawable/file_big" />
     </FrameLayout>
 
@@ -35,18 +35,19 @@
         android:layout_gravity="center"
         android:text="@string/detail_size" />
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:id="@+id/download_container"
-        android:layout_height="wrap_content" >
+    <Button
+        android:id="@+id/bt_detail_download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:text="@string/detail_download" />
 
-        <Button
-            android:id="@+id/bt_detail_download"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:text="@string/detail_download" />
-    </FrameLayout>
+    <ProgressBar
+        android:id="@+id/pb_detail_download_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:indeterminate="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <Button
         android:id="@+id/bt_detail_open"
@@ -54,20 +55,5 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/detail_open" />
-
-    <Button
-        android:id="@+id/bt_detail_preview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/detail_preview" />
-
-    <CheckBox
-        android:id="@+id/cb_detail_sync_subscription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/detail_sync_subscription" />
-
 
 </LinearLayout>

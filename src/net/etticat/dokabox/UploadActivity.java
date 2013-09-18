@@ -1,39 +1,33 @@
 package net.etticat.dokabox;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-
-import net.etticat.dokabox.UploadService.LocalUploadBinder;
 import net.etticat.dokabox.UploadService.BoundUploadServiceListener;
+import net.etticat.dokabox.UploadService.LocalUploadBinder;
 import net.etticat.dokabox.dto.FileSystemEntry;
 import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
-import net.etticat.dokabox.models.WebServiceConnection;
 import net.etticat.dokabox.models.WebServiceConnection.OnFileTransferProgressHandler;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.app.Activity;
-import android.app.ListActivity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.support.v4.app.FragmentActivity;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 public class UploadActivity extends SherlockFragmentActivity implements OnFileTransferProgressHandler,
 	ItemListFragment.Callbacks, BoundUploadServiceListener{ 
 
 
-	private ItemListFragment currentItemListFragment;
-	private Uri fileUri;
+	private ItemListFragment mCurrentItemListFragment;
+	private Uri mFileUri;
 	public static final String ARG_UPLOAD_URI = "upload_uri";
 	
-
-	private UploadService mService;
 	private boolean mBound;
 	
 	@Override
@@ -43,9 +37,9 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 		setContentView(R.layout.activity_upload);
 		
 		Intent intent = getIntent();
-		fileUri = intent.getData();
+		mFileUri = intent.getData();
 		
-		if(fileUri == null){
+		if(mFileUri == null){
 			finish();
 			return;
 		}
@@ -55,7 +49,7 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 		getSupportFragmentManager().beginTransaction()
 				.replace(R.id.fragment_container, itemListFragment).commit();
 		
-		currentItemListFragment= itemListFragment;
+		mCurrentItemListFragment= itemListFragment;
 		
 	}
 
@@ -68,7 +62,6 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 
 	@Override
 	public void progressChanged(FileSystemEntry entry, Integer value) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -86,9 +79,10 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 			ft.addToBackStack(""+item.getId());
 			ft.commit();
 			
-			currentItemListFragment = subItemListFragment;
+			mCurrentItemListFragment = subItemListFragment;
 			return;
 		}
+		// If User clicks a file => nothing happenes
 		
 	}
 
@@ -103,12 +97,12 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 	}
 
 	private void startUpload() {
-		if(currentItemListFragment != null && currentItemListFragment.getEntryId() != 0){
-			Integer parentId = currentItemListFragment.getEntryId();
+		if(mCurrentItemListFragment != null && mCurrentItemListFragment.getEntryId() != 0){
+			Integer parentId = mCurrentItemListFragment.getEntryId();
 			
 			Intent intent = new Intent(this, UploadService.class);
 			intent.putExtra(ItemDetailFragment.ARG_ITEM_ID, parentId);
-			intent.setData(fileUri);
+			intent.setData(mFileUri);
 			startService(intent);
 			bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 		}
@@ -119,21 +113,17 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 	/** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
 
-
-
 		@Override
         public void onServiceConnected(ComponentName className,
                 IBinder service) {
 
 			LocalUploadBinder binder = (LocalUploadBinder) service;
             binder.setListener(UploadActivity.this);
-            mService = binder.getService();
             mBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            mService = null;
             mBound = false;
         }
     };
@@ -154,7 +144,7 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 
 	@Override
 	public Boolean onUploadError(FileSystemEntry entry, String message) {
-		if(entry.getUri().equals(fileUri)){
+		if(entry.getUri().equals(mFileUri)){
 			
 			Toast toast = new Toast(this);
 			toast.setDuration(Toast.LENGTH_LONG);
@@ -168,8 +158,17 @@ public class UploadActivity extends SherlockFragmentActivity implements OnFileTr
 
 	@Override
 	public void setFragment(ItemListFragment itemListFragment) {
-		currentItemListFragment = itemListFragment;
+		mCurrentItemListFragment = itemListFragment;
 		
+	}
+
+	@Override
+	public Boolean isTwoPane() {
+		return false;
+	}
+
+	@Override
+	public void onUploadFinished(FileSystemEntry entry, Boolean success) {		
 	}
 
 }

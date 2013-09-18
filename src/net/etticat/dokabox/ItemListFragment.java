@@ -1,34 +1,33 @@
 package net.etticat.dokabox;
 
-import java.util.Date;
 import java.util.List;
 
+import net.etticat.dokabox.dbmodels.EntryDbHandler;
+import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.dokabox.models.LazyAdapter;
+import net.etticat.dokabox.models.SharedPrefs;
+import net.etticat.dokabox.models.WebServiceConnection;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.handmark.pulltorefresh.library.PullToRefreshBase;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
-
-import net.etticat.dokabox.LoginActivity.UserLoginTask;
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.dto.UserData;
-import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
-import net.etticat.dokabox.models.LazyAdapter;
-import net.etticat.dokabox.models.SharedPrefs;
-import net.etticat.dokabox.models.WebServiceConnection;
 
 /**
  * A list fragment representing a list of Items. This fragment also supports
@@ -53,7 +52,7 @@ public class ItemListFragment extends SherlockListFragment {
 	 * The fragment's current callback object, which is notified of list item
 	 * clicks.
 	 */
-	private Callbacks mCallbacks = sDummyCallbacks;
+	private Callbacks mCallbacks = mDummyCallbacks;
 
 	protected List<FileSystemEntry> entries;
 
@@ -62,6 +61,15 @@ public class ItemListFragment extends SherlockListFragment {
 	 */
 	private int mActivatedPosition = ListView.INVALID_POSITION;
 
+	protected EntryDbHandler mEntryDbHandler;
+	private Integer mId = 0;
+	private RefreshTask mRefreshTask;
+	private LazyAdapter mLazyAdapter;
+
+	protected PullToRefreshListView mPullToRefreshListView;
+
+	public WebServiceConnection webServiceConnection;
+	
 	/**
 	 * A callback interface that all activities containing this fragment must
 	 * implement. This mechanism allows activities to be notified of item
@@ -73,29 +81,25 @@ public class ItemListFragment extends SherlockListFragment {
 		 */
 		public void onItemSelected(FileSystemEntry item);
 		public void setFragment(ItemListFragment itemListFragment);
+		public Boolean isTwoPane();
 	}
-	
-	protected EntryDbHandler entryDbHandler;
-	private Integer id = 0;
-	private RefreshTask mRefreshTask;
-	private SharedPrefs sharedPrefs;
-	private LazyAdapter mLazyAdapter;
-	
-	protected PullToRefreshListView mPullToRefreshListView;
-
-	public WebServiceConnection webServiceConnection;
 
 	/**
 	 * A dummy implementation of the {@link Callbacks} interface that does
 	 * nothing. Used only when this fragment is not attached to an activity.
 	 */
-	private static Callbacks sDummyCallbacks = new Callbacks() {
+	private static Callbacks mDummyCallbacks = new Callbacks() {
 		@Override
 		public void onItemSelected(FileSystemEntry item) {
 		}
 
 		@Override
 		public void setFragment(ItemListFragment itemListFragment) {			
+		}
+
+		@Override
+		public Boolean isTwoPane() {
+			return false;
 		}
 	};
 
@@ -110,30 +114,25 @@ public class ItemListFragment extends SherlockListFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-    	setHasOptionsMenu(true);
-    	
-		entryDbHandler = new EntryDbHandler(getActivity());
-		sharedPrefs = new SharedPrefs(getActivity());
-		webServiceConnection = new WebServiceConnection(getActivity());
-		
-		
-		
-		
-		
+		setHasOptionsMenu(true);
+
+		mEntryDbHandler = EntryDbHandler.getInstance();
+
+		webServiceConnection = new WebServiceConnection();
 	}
-	
+
 	@Override
 	public void onResume() {
 
 		mCallbacks.setFragment(this);
-		entries = entryDbHandler.getEntries(id);
+		entries = mEntryDbHandler.getEntries(mId);
 		refreshListView();
 		refresh();
 
-		
+
 		super.onResume();
 	}
-	
+
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -144,6 +143,7 @@ public class ItemListFragment extends SherlockListFragment {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+
 		default:
 			break;
 		}
@@ -153,51 +153,81 @@ public class ItemListFragment extends SherlockListFragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-	       View layout = inflater.inflate(R.layout.fragment_list, container, false);
-	        ListView lv = (ListView) layout.findViewById(R.id.list);
+		View layout = inflater.inflate(R.layout.fragment_list, container, false);
+		ListView lv = (ListView) layout.findViewById(R.id.list);
 
-	        mPullToRefreshListView = new PullToRefreshListView(getActivity());
-	        mPullToRefreshListView.setLayoutParams(lv.getLayoutParams());
+		mPullToRefreshListView = new PullToRefreshListView(getActivity());
+		mPullToRefreshListView.setLayoutParams(lv.getLayoutParams());
 
-	        mPullToRefreshListView.setOnRefreshListener(new PullToRefreshBase.OnRefreshListener<ListView>()
-            {
-                @Override
-                public void onRefresh(PullToRefreshBase<ListView> refreshView) {
-                    refresh();
-                }
-            });
+		mPullToRefreshListView.setOnRefreshListener(new PullToRefreshBase.OnRefreshListener<ListView>()
+				{
+			@Override
+			public void onRefresh(PullToRefreshBase<ListView> refreshView) {
+				refresh();
+			}
+				});
 
-	        return mPullToRefreshListView;
+
+		return mPullToRefreshListView;
+	}
+
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
+
+		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+		menu.setHeaderTitle(mLazyAdapter.getItem(info.position-1).getName());
+
+		getActivity().getMenuInflater().inflate(R.menu.item_list_context_menu, menu);
+	}
+
+	@Override
+	public boolean onContextItemSelected(android.view.MenuItem item) {
+
+
+		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+		FileSystemEntry entry = mLazyAdapter.getItem(info.position-1);
+
+		switch (item.getItemId()) {
+		case R.id.action_create_folder:
+			createFolder();
+
+			break;
+		case R.id.action_delete:
+			new DeleteTask().execute(entry);
+
+			break;
+
+		default:
+			break;
+		}
+
+		return true;
 	}
 
 	protected void refreshListView(){
 		Context activity = getActivity();
 		if(activity == null)
 			return;
-//		if(mLazyAdapter == null){
-			mLazyAdapter = new LazyAdapter(activity, entries);
-			setListAdapter(mLazyAdapter);
-//		}
-//		else {
-//			mLazyAdapter.notifyDataSetChanged();
+		mLazyAdapter = new LazyAdapter(getActivity(), entries);
 
-//		}
+		setListAdapter(mLazyAdapter);
 
 	}
 
 	public Integer getEntryId() {
-		return id;
+		return mId;
 	}
 
 	public void setId(Integer id) {
-		this.id = id;
+		this.mId = id;
 	}
 
 	public void refresh(){
 		if (mRefreshTask != null) {
 			return;
 		}
-		
+
 		mRefreshTask = new RefreshTask();
 		mRefreshTask.execute((Void) null);
 	}
@@ -212,7 +242,14 @@ public class ItemListFragment extends SherlockListFragment {
 					.getInt(STATE_ACTIVATED_POSITION));
 		}
 		if (savedInstanceState != null && savedInstanceState.containsKey(STATE_FOLDER_ID)) 
-			id = savedInstanceState.getInt(STATE_FOLDER_ID);
+			mId = savedInstanceState.getInt(STATE_FOLDER_ID);
+
+
+		if(mCallbacks.isTwoPane()){
+			setActivateOnItemClick(true);
+		}
+
+		registerForContextMenu(getListView());
 	}
 
 	@Override
@@ -226,7 +263,7 @@ public class ItemListFragment extends SherlockListFragment {
 		}
 
 		mCallbacks = (Callbacks) activity;
-		
+
 		// Probably useless TODO check
 		mCallbacks.setFragment(this);
 	}
@@ -236,7 +273,7 @@ public class ItemListFragment extends SherlockListFragment {
 		super.onDetach();
 
 		// Reset the active callbacks interface to the dummy implementation.
-		mCallbacks = sDummyCallbacks;
+		mCallbacks = mDummyCallbacks;
 	}
 
 	@Override
@@ -246,21 +283,21 @@ public class ItemListFragment extends SherlockListFragment {
 
 		// Notify the active callbacks interface (the activity, if the
 		// fragment is attached to one) that an item has been selected.
-		
+
 		mCallbacks.onItemSelected(mLazyAdapter.getItem(position-1));
 	}
-	
+
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		
+
 		if (mActivatedPosition != ListView.INVALID_POSITION) {
 			// Serialize and persist the activated item position.
 			outState.putInt(STATE_ACTIVATED_POSITION, mActivatedPosition);
 		}
-		outState.putInt(STATE_FOLDER_ID, id);
-		
+		outState.putInt(STATE_FOLDER_ID, mId);
+
 	}
 
 	/**
@@ -284,33 +321,33 @@ public class ItemListFragment extends SherlockListFragment {
 
 		mActivatedPosition = position;
 	}
-	
+
 	/**
 	 * Represents an asynchronous login/registration task used to authenticate
 	 * the user.
 	 */
 	public class RefreshTask extends AsyncTask<Void, Void, Boolean> {
-		
+
 		String uuid;
 		String user;
 		String accessToken;
-		
+
 		@Override
 		protected void onPreExecute() {
-			
-			uuid = sharedPrefs.getUuid();
-			user = sharedPrefs.getUsername();
-			accessToken = sharedPrefs.getAccessToken();
-			
+
+			uuid = SharedPrefs.getUuid();
+			user = SharedPrefs.getUsername();
+			accessToken = SharedPrefs.getAccessToken();
+
 			super.onPreExecute(); 
 		}
-		
-		
+
+
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			
-			entries = webServiceConnection.getDirectoryContent(id, true);
-			
+
+			entries = webServiceConnection.getDirectoryContent(mId, true);
+
 			return (entries != null);
 		}
 
@@ -321,8 +358,8 @@ public class ItemListFragment extends SherlockListFragment {
 
 			if (success) {
 				refreshListView();
-				entryDbHandler.replaceEntries(entries, id);
-				
+				mEntryDbHandler.replaceEntries(entries, mId);
+
 			} 
 			mPullToRefreshListView.onRefreshComplete();
 		}
@@ -332,5 +369,104 @@ public class ItemListFragment extends SherlockListFragment {
 			mRefreshTask = null;
 		}
 	}
+
+
+	/**
+	 * Represents an asynchronous login/registration task used to authenticate
+	 * the user.
+	 */
+	public class DeleteTask extends AsyncTask<FileSystemEntry, Void, Boolean> {
+
+		String uuid;
+		String user;
+		String accessToken;
+
+		@Override
+		protected void onPreExecute() {
+
+			uuid = SharedPrefs.getUuid();
+			user = SharedPrefs.getUsername();
+			accessToken = SharedPrefs.getAccessToken();
+
+			super.onPreExecute(); 
+		}
+
+
+		@Override
+		protected Boolean doInBackground(FileSystemEntry... params) {
+			return webServiceConnection.deleteItem(params[0].getId(), true);
+		}
+
+
+		@Override
+		protected void onPostExecute(Boolean success) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+			refresh();
+		}
+	}
 	
+
+
+	/**
+	 * Represents an asynchronous login/registration task used to authenticate
+	 * the user.
+	 */
+	public class CreateFolderTask extends AsyncTask<String, Void, Boolean> {
+
+		String uuid;
+		String user;
+		String accessToken;
+
+		@Override
+		protected void onPreExecute() {
+
+			uuid = SharedPrefs.getUuid();
+			user = SharedPrefs.getUsername();
+			accessToken = SharedPrefs.getAccessToken();
+
+			super.onPreExecute(); 
+		}
+
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			return webServiceConnection.createFolder(mId, params[0], true);
+		}
+
+
+		@Override
+		protected void onPostExecute(final Boolean success) {
+			refresh();
+		}
+
+	}
+
+	public void createFolder() {
+		if(getActivity()  == null) 
+			return;
+		AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+
+		alert.setTitle("Create Folder");
+		alert.setMessage("Folder Name:");
+
+		final EditText input = new EditText(getActivity());
+
+		alert.setView(input);
+
+		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				String value = input.getText().toString();
+				new CreateFolderTask().execute(value);
+			}
+		});
+		alert.setNegativeButton("Cancel", null);
+
+		alert.show();
+
+
+	}
+
 }

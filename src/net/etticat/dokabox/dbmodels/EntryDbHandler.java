@@ -1,19 +1,18 @@
 package net.etticat.dokabox.dbmodels;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Environment;
-import android.util.Log;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.dokabox.models.ContextProvider;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 
 public class EntryDbHandler extends SQLiteOpenHelper {
 
@@ -39,9 +38,19 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 	private static final String KEY_DOWNLOAD_DATE = "downloadedDate";
 	private static final String KEY_DOWNLOAD_ALTERNATION_DATE = "downloadedAlternationDate";
 
-	public EntryDbHandler(Context context) {
+	private EntryDbHandler(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
+    private static EntryDbHandler instance = null;
+
+    public static EntryDbHandler getInstance() {
+            if (instance == null) {
+                  if (instance == null) {
+                        instance = new EntryDbHandler(ContextProvider.getContext());
+                  }
+            }
+            return instance;
+    }
 
 	// Creating Tables
 	@Override
