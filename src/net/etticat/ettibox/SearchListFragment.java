@@ -1,4 +1,4 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
 import android.os.AsyncTask;
 import android.os.Bundle;

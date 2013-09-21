@@ -1,8 +1,8 @@
-package net.etticat.dokabox.models;
+package net.etticat.ettibox.models;
 
 import java.io.File;
 
-import net.etticat.dokabox.dto.FileSystemEntry;
+import net.etticat.ettibox.dto.FileSystemEntry;
 
 public class FileInfoChecker {
 

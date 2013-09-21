@@ -1,14 +1,14 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
 import java.io.File;
 
-import net.etticat.dokabox.DownloadService.BoundDownloadServiceListener;
-import net.etticat.dokabox.DownloadService.LocalBinder;
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.models.FileInfoChecker;
-import net.etticat.dokabox.models.FileInfoChecker.FileInfoStatus;
-import net.etticat.dokabox.models.LazyAdapter;
+import net.etticat.ettibox.DownloadService.BoundDownloadServiceListener;
+import net.etticat.ettibox.DownloadService.LocalBinder;
+import net.etticat.ettibox.dbmodels.EntryDbHandler;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.models.FileInfoChecker;
+import net.etticat.ettibox.models.FileInfoChecker.FileInfoStatus;
+import net.etticat.ettibox.models.LazyAdapter;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;

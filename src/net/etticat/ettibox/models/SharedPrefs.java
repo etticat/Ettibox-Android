@@ -1,4 +1,4 @@
-package net.etticat.dokabox.models;
+package net.etticat.ettibox.models;
 
 
 import java.util.UUID;
@@ -8,7 +8,7 @@ import android.content.SharedPreferences;
 
 public class SharedPrefs extends ContextProvider{
 
-	private static final String PREFS_NAME = "Dokabox";
+	private static final String PREFS_NAME = "Ettibox";
 	
 	private static final String PREFS_KEY_USERNAME = "username";
 	private static final String PREFS_KEY_ACCESS_TOKEN = "accessToken";

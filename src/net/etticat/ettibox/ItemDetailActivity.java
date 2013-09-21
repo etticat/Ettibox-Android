@@ -1,4 +1,4 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;

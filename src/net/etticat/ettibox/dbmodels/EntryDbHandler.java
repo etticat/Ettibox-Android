@@ -1,12 +1,12 @@
-package net.etticat.dokabox.dbmodels;
+package net.etticat.ettibox.dbmodels;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.models.ContextProvider;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.models.ContextProvider;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -21,7 +21,7 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 	private static final int DATABASE_VERSION = 7;
 
 	// Database Name
-	private static final String DATABASE_NAME = "dokabox";
+	private static final String DATABASE_NAME = "ettibox";
 
 	// Contacts table name
 	private static final String TABLE_ENTRIES = "fileSystemEntries";
@@ -247,7 +247,7 @@ public class EntryDbHandler extends SQLiteOpenHelper {
 			entry = getFileSystemEntry(entry.getParentId());
 			path = entry.getName() + "/" + path;
 		}
-		path = "/dokabox/" + entry.getId() + "/" + path;
+		path = "/ettibox/" + entry.getId() + "/" + path;
 
 		return new File(
 				Environment.getExternalStorageDirectory(), path);

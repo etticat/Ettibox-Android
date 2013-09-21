@@ -1,12 +1,12 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
 import java.util.List;
 
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.models.LazyAdapter;
-import net.etticat.dokabox.models.SharedPrefs;
-import net.etticat.dokabox.models.WebServiceConnection;
+import net.etticat.ettibox.dbmodels.EntryDbHandler;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.models.LazyAdapter;
+import net.etticat.ettibox.models.SharedPrefs;
+import net.etticat.ettibox.models.WebServiceConnection;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;

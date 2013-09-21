@@ -1,4 +1,4 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -15,8 +15,8 @@ import com.actionbarsherlock.view.Menu;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 
-import net.etticat.dokabox.dto.UserData;
-import net.etticat.dokabox.models.WebServiceConnection;
+import net.etticat.ettibox.dto.UserData;
+import net.etticat.ettibox.models.WebServiceConnection;
 
 
 /**
@@ -29,7 +29,7 @@ public class LoginActivity extends SherlockActivity {
 	/**
 	 * The default email to populate the email field with.
 	 */
-	public static final String EXTRA_EMAIL = "net.etticat.dokabox.extra.EMAIL";
+	public static final String EXTRA_EMAIL = "net.etticat.ettibox.extra.EMAIL";
 
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.

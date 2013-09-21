@@ -1,4 +1,4 @@
-package net.etticat.dokabox.models;
+package net.etticat.ettibox.models;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
@@ -15,12 +15,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import net.etticat.dokabox.LoginActivity;
-import net.etticat.dokabox.R;
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
-import net.etticat.dokabox.dto.UserData;
+import net.etticat.ettibox.LoginActivity;
+import net.etticat.ettibox.R;
+import net.etticat.ettibox.dbmodels.EntryDbHandler;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.dto.FileSystemEntry.FileSystemEntryType;
+import net.etticat.ettibox.dto.UserData;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -49,7 +49,7 @@ public class WebServiceConnection {
 
 	private static final String NAMESPACE = "http://tempuri.org/";
 	private static final String URL = "http://sarah.ettlinger.ath.cx:5986/";
-	private static final String WEBSERVICE_URL = URL + "Dokabox.asmx";
+	private static final String WEBSERVICE_URL = URL + "Ettibox.asmx";
 	private static final String DOWNLOAD_URL = URL + "Download.aspx";
 	private static final String UPLOAD_URL = URL + "Upload.aspx";
 

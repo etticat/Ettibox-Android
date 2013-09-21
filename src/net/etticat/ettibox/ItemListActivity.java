@@ -1,10 +1,10 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
-import net.etticat.dokabox.UploadService.BoundUploadServiceListener;
-import net.etticat.dokabox.UploadService.LocalUploadBinder;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
-import net.etticat.dokabox.models.SharedPrefs;
+import net.etticat.ettibox.UploadService.BoundUploadServiceListener;
+import net.etticat.ettibox.UploadService.LocalUploadBinder;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.dto.FileSystemEntry.FileSystemEntryType;
+import net.etticat.ettibox.models.SharedPrefs;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;

@@ -1,4 +1,4 @@
-package net.etticat.dokabox.models;
+package net.etticat.ettibox.models;
 
 
 import java.text.DecimalFormat;
@@ -6,9 +6,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import net.etticat.dokabox.R;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.dto.FileSystemEntry.FileSystemEntryType;
+import net.etticat.ettibox.R;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.dto.FileSystemEntry.FileSystemEntryType;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;

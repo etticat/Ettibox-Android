@@ -1,12 +1,12 @@
-package net.etticat.dokabox;
+package net.etticat.ettibox;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
-import net.etticat.dokabox.dbmodels.EntryDbHandler;
-import net.etticat.dokabox.dto.FileSystemEntry;
-import net.etticat.dokabox.models.WebServiceConnection;
-import net.etticat.dokabox.models.WebServiceConnection.OnUploadProgressHandler;
+import net.etticat.ettibox.dbmodels.EntryDbHandler;
+import net.etticat.ettibox.dto.FileSystemEntry;
+import net.etticat.ettibox.models.WebServiceConnection;
+import net.etticat.ettibox.models.WebServiceConnection.OnUploadProgressHandler;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;

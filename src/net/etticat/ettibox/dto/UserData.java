@@ -1,4 +1,4 @@
-package net.etticat.dokabox.dto;
+package net.etticat.ettibox.dto;
 
 import java.util.Date;
 
