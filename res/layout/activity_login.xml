@@ -59,7 +59,7 @@
                 android:imeOptions="actionUnspecified"
                 android:inputType="textPassword"
                 android:maxLines="1"
-                android:singleLine="true" />
+                android:singleLine="true" />http://tempuri.org/
 
             <Button
                 android:id="@+id/sign_in_button"

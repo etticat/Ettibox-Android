@@ -39,6 +39,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -47,11 +48,11 @@ import android.net.Uri;
 public class WebServiceConnection {
 
 
-	private static final String NAMESPACE = "http://tempuri.org/";
-	private static final String URL = "http://sarah.ettlinger.ath.cx:5986/";
-	private static final String WEBSERVICE_URL = URL + "Ettibox.asmx";
-	private static final String DOWNLOAD_URL = URL + "Download.aspx";
-	private static final String UPLOAD_URL = URL + "Upload.aspx";
+	private static String NAMESPACE;
+	private static String URL;
+	private static String WEBSERVICE_URL;
+	private static String DOWNLOAD_URL;
+	private static String UPLOAD_URL;
 
 	private static final String METHOD_LOGIN = "LoginUser";
 	private static final String METHOD_DIRECTORYCONTENT = "DirectoryContent";
@@ -69,6 +70,15 @@ public class WebServiceConnection {
 		mEntryDbHandler = EntryDbHandler.getInstance();
 		mConnectivityManager =
 				(ConnectivityManager)ContextProvider.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+	}
+	
+	{
+		Resources r = ContextProvider.getContext().getResources();
+		NAMESPACE = r.getString(R.string.server_connection_namespace);
+		URL = r.getString(R.string.server_connection_url);
+		WEBSERVICE_URL = URL + r.getString(R.string.server_connection_webservice);
+		DOWNLOAD_URL = URL + r.getString(R.string.server_connection_download);
+		UPLOAD_URL = URL + r.getString(R.string.server_connection_upload);
 	}
 
 	public UserData login(String user, String password){
@@ -167,9 +177,6 @@ public class WebServiceConnection {
 
 
 		List<FileSystemEntry> result = null;
-
-
-
 
 		SoapObject Request = new SoapObject(NAMESPACE, METHOD_DIRECTORYCONTENT);
 
