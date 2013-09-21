@@ -95,10 +95,12 @@ public class DownloadService  extends Service implements OnFileTransferProgressH
 
 		Integer id;
 		try {
+			if(intent.getExtras() == null) return super.onStartCommand(intent, flags, startId);
+			
 			id =  intent.getExtras().getInt(ItemDetailFragment.ARG_ITEM_ID);
 		} catch (NumberFormatException e) {
 			return super.onStartCommand(intent, flags, startId);
-		}
+		} 
 
 		FileSystemEntry entry = mEntryDbConnection.getFileSystemEntry(id);
 		if(entry != null)

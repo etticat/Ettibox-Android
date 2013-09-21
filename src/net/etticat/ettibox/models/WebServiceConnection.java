@@ -43,6 +43,7 @@ import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.util.Log;
 
 
 public class WebServiceConnection {
@@ -65,6 +66,12 @@ public class WebServiceConnection {
 
 	private EntryDbHandler mEntryDbHandler;
 	private ConnectivityManager mConnectivityManager;
+	private String TAG;
+	
+	/*
+	 * At least this amount of time has to pass to refresh the Download-Progressbar again. (milliseconds)
+	 */
+	private long DOWNLOAD_PROGRESS_INTERVAL = 1000;
 
 	public WebServiceConnection() {
 		mEntryDbHandler = EntryDbHandler.getInstance();
@@ -168,6 +175,8 @@ public class WebServiceConnection {
 
 	}
 	public List<FileSystemEntry> getDirectoryContent(Integer id, Boolean retry){
+		
+		Log.d(TAG, "getDirectoryContent started");
 		NetworkInfo activeNetwork = mConnectivityManager.getActiveNetworkInfo();
 		if(!activeNetwork.isConnectedOrConnecting())
 			return null;
@@ -321,6 +330,7 @@ public class WebServiceConnection {
 
 		}
 
+		Log.d(TAG, "getDirectoryContent ended");
 		return result;
 
 	}
@@ -495,8 +505,6 @@ public class WebServiceConnection {
 			// Execute HTTP Post Request
 			HttpResponse response = httpclient.execute(httppost);
 
-
-
 			//Define InputStreams to read from the URLConnection.
 			// uses 3KB download buffer
 			InputStream is = response.getEntity().getContent();
@@ -508,15 +516,22 @@ public class WebServiceConnection {
 			long totalLength = response.getEntity().getContentLength();
 
 			long downloadedLength = 0;
-
 			int restLength;
+			long lastProgressUpdate = 0;
+			
 			while ((restLength = inStream.read(buff)) != -1)
 			{
 				downloadedLength += restLength;
 				outStream.write(buff,0,restLength);
 
 				Integer percent = (int) ((100*downloadedLength/totalLength));
-				onDownloadProgress.progressChanged(entry, percent);
+				
+				//Wait at least an interval before refreshing the Progress again
+				if(lastProgressUpdate+DOWNLOAD_PROGRESS_INTERVAL  < System.currentTimeMillis()){
+					onDownloadProgress.progressChanged(entry, percent);
+					lastProgressUpdate = System.currentTimeMillis();
+					Log.d(TAG, "Download refresh Progress");
+				}
 
 			}
 
