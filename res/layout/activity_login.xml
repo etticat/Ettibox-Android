@@ -47,7 +47,6 @@
                 android:hint="@string/prompt_email"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"
-                android:text="etti"
                 android:singleLine="true" />
 
             <EditText
@@ -60,7 +59,6 @@
                 android:imeOptions="actionUnspecified"
                 android:inputType="textPassword"
                 android:maxLines="1"
-                android:text="aG!53#;FaW"
                 android:singleLine="true" />
 
             <Button
